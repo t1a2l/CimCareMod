@@ -192,7 +192,7 @@ namespace SeniorCitizenCenterMod {
             }
 
             // Validate not already living in a nursing home
-            if (this.buildingManager.m_buildings.m_buffer[homeBuildingId].Info.m_buildingAI is NursingHomeAi) {
+            if (this.buildingManager.m_buildings.m_buffer[homeBuildingId].Info.m_buildingAI is EldercareAI) {
                 return false;
             }
 

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Threading;
 using ColossalFramework;
@@ -14,14 +13,10 @@ namespace SeniorCitizenCenterMod {
         public const int LOADED_LEVEL_GAME = 6;
         public const int LOADED_LEVEL_ASSET_EDITOR = 19;
 
-        private const String MEDICAL_CLINIC_NAME = "Medical Clinic";
-
         private static readonly Queue<IEnumerator> ACTION_QUEUE = new Queue<IEnumerator>();
         private static readonly object QUEUE_LOCK = new object();
 
-        private readonly AiReplacementHelper aiReplacementHelper = new AiReplacementHelper();
         private int attemptingInitialization;
-        private int numTimesSearchedForMedicalClinic = 0;
 
         private bool initialized;
         private int numAttempts = 0;
@@ -66,7 +61,7 @@ namespace SeniorCitizenCenterMod {
             if (this.numAttempts++ >= 20) {
                 Logger.logError("NursingHomeInitializer.attemptInitialization -- *** NURSING HOMES FUNCTIONALITY DID NOT INITLIZIE PRIOR TO GAME LOADING -- THE SENIOR CITIZEN CENTER MOD MAY NOT FUNCTION PROPERLY ***");
                 // Set initilized so it won't keep trying
-                this.setInitialized();
+                this.SetInitialized();
             }
 
             // Check to see if initilization can start
@@ -75,22 +70,13 @@ namespace SeniorCitizenCenterMod {
                 return;
             }
 
-            // Wait for the Medical Clinic or other HospitalAI Building to load since all new Nursing Homes will copy its values
-            BuildingInfo medicalBuildingInfo = this.findMedicalBuildingInfo();
-            if (medicalBuildingInfo == null) {
-                this.attemptingInitialization = 0;
-                return;
-            }
 
             // Start loading
             Logger.logInfo(LOG_INITIALIZER, "NursingHomeInitializer.attemptInitialization -- Attempting Initialization");
             Singleton<LoadingManager>.instance.QueueLoadingAction(ActionWrapper(() => {
                 try {
-                    if (this.loadedLevel == LOADED_LEVEL_GAME) {
-                        this.StartCoroutine(this.initHealthcareMenu());
-                    }
                     if (this.loadedLevel == LOADED_LEVEL_GAME || this.loadedLevel == LOADED_LEVEL_ASSET_EDITOR) {
-                        this.StartCoroutine(this.initNursingHomes(medicalBuildingInfo));
+                        this.StartCoroutine(this.initNursingHomes());
                         AddQueuedActionsToLoadingQueue();
                     }
                 } catch (Exception e) {
@@ -99,79 +85,16 @@ namespace SeniorCitizenCenterMod {
             }));
 
             // Set initilized
-            this.setInitialized();
+            this.SetInitialized();
         }
 
-        private void setInitialized() {
+        private void SetInitialized() {
             this.initialized = true;
             this.attemptingInitialization = 0;
-            this.numTimesSearchedForMedicalClinic = 0;
         }
 
-        private BuildingInfo findMedicalBuildingInfo() {
-            // First check for the known Medical Clinic
-            BuildingInfo medicalBuildingInfo = PrefabCollection<BuildingInfo>.FindLoaded(MEDICAL_CLINIC_NAME);
-            if (medicalBuildingInfo != null) {
-                return medicalBuildingInfo;
-            }
 
-            // Try 5 times to search for the Medical Clinic before giving up
-            if (++this.numTimesSearchedForMedicalClinic < 5) {
-                return null;
-            }
-
-            // Attempt to find a suitable medical building that can be used as a template
-            Logger.logInfo(LOG_INITIALIZER, "NursingHomeInitializer.findMedicalBuildingInfo -- Couldn't find the Medical Clinic asset after {0} tries, attempting to search for any Building with a HospitalAi", this.numTimesSearchedForMedicalClinic);
-            for (uint i=0; (long) PrefabCollection<BuildingInfo>.LoadedCount() > (long) i; ++i) {
-                BuildingInfo buildingInfo = PrefabCollection<BuildingInfo>.GetLoaded(i);
-                if (buildingInfo != null && buildingInfo.GetService() == ItemClass.Service.HealthCare && !buildingInfo.m_buildingAI.IsWonder() && buildingInfo.m_buildingAI is HospitalAI) {
-                    Logger.logInfo(LOG_INITIALIZER, "NursingHomeInitializer.findMedicalBuildingInfo -- Using the {0} as a template instead of the Medical Clinic", buildingInfo);
-                    return buildingInfo;
-                }
-            }
-
-            // Return null to try again next time
-            return null;
-        }
-
-        private IEnumerator initHealthcareMenu() {
-            Logger.logInfo(LOG_INITIALIZER, "NursingHomeInitializer.attemptInitialization -- initHealthcareMenu");
-            int delay = 9999999;
-
-            // Run this endlessly every 600 frames (~10 seconds)
-            while (true) {
-                if(delay++ < 600) {
-                    yield return new WaitForEndOfFrame();
-                    continue;
-                }
-
-                // Start a reset and reinit
-                Logger.logInfo(LOG_INITIALIZER, "NursingHomeInitializer.attemptInitialization -- initHealthcareMenu -- Start");
-                Boolean failed = true;
-                PanelHelper.reset();
-
-                // Utilize 25 passes during initilization
-                for (int i = 0; i < 25; i++) {
-                    if (PanelHelper.initCustomHealthcareGroupPanel()) {
-                        failed = false;
-                        break;
-                    }
-                    yield return new WaitForEndOfFrame();
-                }
-
-                // Log an error message if the initilization took longer than 25 attempts
-                if(failed) {
-                    Logger.logError(LOG_INITIALIZER, "NursingHomeInitializer.attemptInitialization -- initHealthcareMenu -- FAILED");
-                }
-
-                Logger.logInfo(LOG_INITIALIZER, "NursingHomeInitializer.attemptInitialization -- initHealthcareMenu -- End");
-
-                // Reset the delay to 0 and start waiting again
-                delay = 0;
-            }
-        }
-
-        private IEnumerator initNursingHomes(BuildingInfo buildingToCopyFrom) {
+        private IEnumerator initNursingHomes() {
             Logger.logInfo(LOG_INITIALIZER, "NursingHomeInitializer.initNursingHomes");
             float capcityModifier = SeniorCitizenCenterMod.getInstance().getOptionsManager().getCapacityModifier();
             uint index = 0U;
@@ -182,13 +105,13 @@ namespace SeniorCitizenCenterMod {
                     BuildingInfo buildingInfo = PrefabCollection<BuildingInfo>.GetLoaded(index);
 
                     // Check for replacement of AI
-                    if (buildingInfo != null && buildingInfo.name.EndsWith("_Data") && buildingInfo.name.Contains("NH123")) {
-                        this.aiReplacementHelper.replaceBuildingAi<NursingHomeAi>(buildingInfo, buildingToCopyFrom);
+                    if (buildingInfo != null && ((buildingInfo.name.EndsWith("_Data") && buildingInfo.name.Contains("NH123")) || (buildingInfo.name.Equals("Eldercare 01")))) {
+                        AiReplacementHelper.ApplyNewAIToBuilding(buildingInfo);
                     }
 
                     // Check for updating capacity - Existing NHs will be updated on-load, this will set the data used for placing new homes
-                    if (this.loadedLevel == LOADED_LEVEL_GAME && buildingInfo != null && buildingInfo.m_buildingAI is NursingHomeAi) {
-                        ((NursingHomeAi) buildingInfo.m_buildingAI).updateCapacity(capcityModifier);
+                    if (this.loadedLevel == LOADED_LEVEL_GAME && buildingInfo != null && buildingInfo.m_buildingAI is NursingHomeAI nursingHomeAI) {
+                        nursingHomeAI.updateCapacity(capcityModifier);
                     }
                 }
                 yield return new WaitForEndOfFrame();
@@ -214,8 +137,7 @@ namespace SeniorCitizenCenterMod {
                 }
                 Queue<IEnumerator> queue2 = new Queue<IEnumerator>(queue1.Count + 1);
                 queue2.Enqueue(queue1.Dequeue());
-                do
-                    ; while (!Monitor.TryEnter(QUEUE_LOCK, SimulationManager.SYNCHRONIZE_TIMEOUT));
+                while (!Monitor.TryEnter(QUEUE_LOCK, SimulationManager.SYNCHRONIZE_TIMEOUT));
                 try {
                     while (ACTION_QUEUE.Count > 0) {
                         queue2.Enqueue(ACTION_QUEUE.Dequeue());
@@ -230,23 +152,6 @@ namespace SeniorCitizenCenterMod {
             } finally {
                 Monitor.Exit(obj);
             }
-        }
-    }
-
-    public static class TypeExtensions {
-        public static IEnumerable<FieldInfo> GetAllFieldsFromType(this Type type) {
-            if (type == null) {
-                return Enumerable.Empty<FieldInfo>();
-            }
-            BindingFlags bindingAttr = BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
-            if (type.BaseType != null) {
-                return type.GetFields(bindingAttr).Concat(type.BaseType.GetAllFieldsFromType());
-            }
-            return type.GetFields(bindingAttr);
-        }
-
-        public static FieldInfo GetFieldByName(this Type type, string name) {
-            return type.GetAllFieldsFromType().Where(p => p.Name == name).FirstOrDefault();
         }
     }
 }

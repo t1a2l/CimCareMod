@@ -71,34 +71,19 @@ namespace SeniorCitizenCenterMod {
         }
 
         public void updateCapacity(float targetValue) {
-            try {
-                SeniorCitizenCenterMod seniorCitizenCenterMod = SeniorCitizenCenterMod.getInstance();
-                if (seniorCitizenCenterMod == null || seniorCitizenCenterMod.getNursingHomeInitializer() == null) {
-                    Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.updateCapacity -- Skipping capacity update because a game is not loaded yet");
-                    return;
-                }
-
-                NursingHomeInitializer nursingHomeInitializer = SeniorCitizenCenterMod.getInstance().getNursingHomeInitializer();
-                if (nursingHomeInitializer.getLoadedLevel() != NursingHomeInitializer.LOADED_LEVEL_GAME) {
-                    Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.updateCapacity -- Skipping capacity update because a game is not loaded yet");
-                    return;
-                }
-            } catch (Exception e) {
-                Logger.logError(Logger.LOG_OPTIONS, "OptionsManager.updateCapacity -- Skipping capacity update because a game is not loaded yet -- Exception: {0}", e.Message);
-            }
 
             Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.updateCapacity -- Updating capacity with modifier: {0}", targetValue);
             for (uint index = 0; PrefabCollection<BuildingInfo>.LoadedCount() > index; ++index) {
                 BuildingInfo buildingInfo = PrefabCollection<BuildingInfo>.GetLoaded(index);
-                if (buildingInfo != null && buildingInfo.m_buildingAI is NursingHomeAi) {
-                    ((NursingHomeAi) buildingInfo.m_buildingAI).updateCapacity(targetValue);
+                if (buildingInfo != null && buildingInfo.m_buildingAI is NursingHomeAI nursingHomeAI) {
+                    nursingHomeAI.updateCapacity(targetValue);
                 }
             }
 
             BuildingManager buildingManager = Singleton<BuildingManager>.instance;
             for (ushort i=0; i < buildingManager.m_buildings.m_buffer.Length; i++) {
-                if (buildingManager.m_buildings.m_buffer[i].Info != null && buildingManager.m_buildings.m_buffer[i].Info.m_buildingAI != null && buildingManager.m_buildings.m_buffer[i].Info.m_buildingAI is NursingHomeAi) {
-                    ((NursingHomeAi) buildingManager.m_buildings.m_buffer[i].Info.m_buildingAI).validateCapacity(i, ref buildingManager.m_buildings.m_buffer[i], true);
+                if (buildingManager.m_buildings.m_buffer[i].Info != null && buildingManager.m_buildings.m_buffer[i].Info.m_buildingAI != null && buildingManager.m_buildings.m_buffer[i].Info.m_buildingAI is NursingHomeAI nursingHomeAI) {
+                    nursingHomeAI.validateCapacity(i, ref buildingManager.m_buildings.m_buffer[i], true);
                 }
             }
         }
@@ -154,7 +139,7 @@ namespace SeniorCitizenCenterMod {
                 using (StreamReader streamReader = new StreamReader("SeniorCitizenCenterModOptions.xml")) {
                     options = (OptionsManager.Options) new XmlSerializer(typeof(OptionsManager.Options)).Deserialize(streamReader);
                 }
-            } catch (FileNotFoundException ex) {
+            } catch (FileNotFoundException) {
                 // Options probably not serialized yet, just return
                 return;
             } catch (Exception e) {
