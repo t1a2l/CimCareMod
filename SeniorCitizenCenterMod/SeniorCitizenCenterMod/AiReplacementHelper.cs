@@ -7,10 +7,8 @@ namespace SeniorCitizenCenterMod {
 
         public static void ApplyNewAIToBuilding(BuildingInfo b) {
             try {
-                if (b != null && b.name.EndsWith("_Data") && b.name.Contains("NH123")) {
-                    ChangeBuildingAI(b, typeof(NursingHomeAI));
-                    return;
-                }
+                ChangeBuildingAI(b, typeof(NursingHomeAI));
+                return;
             }
             catch (Exception e) {
                 Logger.logInfo(e.ToString());
