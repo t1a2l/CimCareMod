@@ -105,10 +105,10 @@ namespace SeniorCitizenCenterMod {
                     BuildingInfo buildingInfo = PrefabCollection<BuildingInfo>.GetLoaded(index);
 
                     // Check for replacement of AI
-                    if (buildingInfo != null && ((buildingInfo.name.EndsWith("_Data") && buildingInfo.name.Contains("NH123")) || (buildingInfo.name.Equals("Eldercare 01")))) {
+                    if (buildingInfo != null && ((buildingInfo.name.EndsWith("_Data") && buildingInfo.name.Contains("NH123")) || (buildingInfo.GetAI() is EldercareAI)) && !buildingInfo.name.Equals("Eldercare 01"))
+                    {
                         AiReplacementHelper.ApplyNewAIToBuilding(buildingInfo);
                     }
-
                     // Check for updating capacity - Existing NHs will be updated on-load, this will set the data used for placing new homes
                     if (this.loadedLevel == LOADED_LEVEL_GAME && buildingInfo != null && buildingInfo.m_buildingAI is NursingHomeAI nursingHomeAI) {
                         nursingHomeAI.updateCapacity(capcityModifier);
