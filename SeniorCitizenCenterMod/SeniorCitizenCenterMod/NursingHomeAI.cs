@@ -223,6 +223,7 @@ namespace SeniorCitizenCenterMod {
 		    string text = LocaleFormatter.FormatGeneric("AIINFO_WATER_CONSUMPTION", GetWaterConsumption() * 16) + Environment.NewLine + LocaleFormatter.FormatGeneric("AIINFO_ELECTRICITY_CONSUMPTION", GetElectricityConsumption() * 16);
 		    return text;
 	    }
+
         public override string GetLocalizedStats(ushort buildingId, ref Building data) {
             int numResidents;
             int numRoomsOccupied;
