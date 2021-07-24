@@ -27,16 +27,11 @@ namespace SeniorCitizenCenterMod {
         private UIDropDown incomeDropDown;
         private IncomeValues incomeValue = IncomeValues.NO_MAINTENANCE;
 
-        private UICheckBox hideTabCheckBox;
-        private bool hideTab = true;
-
         public void initialize(UIHelperBase helper) {
             Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.initialize -- Initializing Menu Options");
             UIHelperBase group = helper.AddGroup("Nursing Home Settings");
             this.capacityDropDown = (UIDropDown) group.AddDropdown("Capacity Modifier", CAPACITY_LABELS, 1, handleCapacityChange);
             this.incomeDropDown = (UIDropDown) group.AddDropdown("Income Modifier", INCOME_LABELS, 2, handleIncomeChange);
-            group.AddSpace(5);
-            this.hideTabCheckBox = (UICheckBox) group.AddCheckbox("Hide Strange Healthcare Tab (Requires reload from Main Menu)", hideTab, handleHideTabChange);
             group.AddSpace(5);
             group.AddButton("Save", saveOptions);
             //group.AddSlider("Capacity Modifier", 0.5f, 5.0f, 0.5f, 1.0f, handleCapacityChange);
@@ -64,10 +59,6 @@ namespace SeniorCitizenCenterMod {
 
         public IncomeValues getIncomeModifier() {
             return this.incomeValue;
-        }
-
-        public bool getHideTabSelectedValue() {
-            return this.hideTab;
         }
 
         public void updateCapacity(float targetValue) {
@@ -112,15 +103,6 @@ namespace SeniorCitizenCenterMod {
                 }
             }
 
-            if (this.hideTabCheckBox != null) {
-                bool hideTab = this.hideTabCheckBox.isChecked;
-                options.hideTabSelectedValue = hideTab;
-                if (hideTab != this.hideTab) {
-                    Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.saveOptions -- Hide Tab Set to: {0}", hideTab);
-                    this.hideTab = hideTab;
-                }
-            }
-
             try {
                 using (StreamWriter streamWriter = new StreamWriter("SeniorCitizenCenterModOptions.xml")) {
                     new XmlSerializer(typeof(OptionsManager.Options)).Serialize(streamWriter, options);
@@ -157,12 +139,6 @@ namespace SeniorCitizenCenterMod {
                 Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.loadOptions -- Loading Income Modifier to: {0}", (IncomeValues) options.incomeModifierSelectedIndex);
                 this.incomeDropDown.selectedIndex = options.incomeModifierSelectedIndex - 1;
                 this.incomeValue = (IncomeValues) options.incomeModifierSelectedIndex;
-            }
-            
-            if(options.hideTabSelectedValue.HasValue) {
-                Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.loadOptions -- Loading Hide Tab to: {0}", options.hideTabSelectedValue);
-                this.hideTabCheckBox.isChecked = (bool) options.hideTabSelectedValue;
-                this.hideTab = (bool) options.hideTabSelectedValue;
             }
         }
 
