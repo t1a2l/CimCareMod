@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Reflection;
-using HarmonyLib;
 using System.Text;
 using ColossalFramework;
 using ColossalFramework.Math;
@@ -17,8 +15,14 @@ namespace SeniorCitizenCenterMod {
 
         private Randomizer randomizer = new Randomizer(97);
 
+        [CustomizableProperty("Uneducated Workers", "Workers", 0)]
+        public int numUneducatedWorkers = 5;
+
         [CustomizableProperty("Educated Workers", "Workers", 1)]
         public int numEducatedWorkers = 5;
+
+        [CustomizableProperty("Well Educated Workers", "Workers", 2)]
+        public int numWellEducatedWorkers = 5;
 
         [CustomizableProperty("Highly Educated Workers", "Workers", 3)]
         public int numHighlyEducatedWorkers = 4;
@@ -27,148 +31,226 @@ namespace SeniorCitizenCenterMod {
         public int numRooms = 25;
         private float capacityModifier = 1.0f;
 
-        [CustomizableProperty("Uneducated Workers", "Workers", 0)]
-        public int numUneducatedWorkers = 5;
-
-        [CustomizableProperty("Well Educated Workers", "Workers", 2)]
-        public int numWellEducatedWorkers = 5;
-
         [CustomizableProperty("Operation Radius")]
         public float operationRadius = 500f;
 
         [CustomizableProperty("Quality (values: 0-5 including 0 and 5)")]
         public int quality = 2;
 
-        private delegate void ProduceGoodsDelegate(PlayerBuildingAI instance, ushort buildingID, ref Building buildingData, ref Building.Frame frameData, int productionRate, int finalProductionRate, ref Citizen.BehaviourData behaviour, int aliveWorkerCount, int totalWorkerCount, int workPlaceCount, int aliveVisitorCount, int totalVisitorCount, int visitPlaceCount);
-        private static ProduceGoodsDelegate BaseProduceGoods = AccessTools.MethodDelegate<ProduceGoodsDelegate>(typeof(PlayerBuildingAI).GetMethod("ProduceGoods", BindingFlags.Instance | BindingFlags.NonPublic), null, false);
+        public override void CreateBuilding(ushort buildingID, ref Building data)
+	    {
+		    base.CreateBuilding(buildingID, ref data);
+		    int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
+            int numResidents;
+            int numRoomsOccupied;
+            getOccupancyDetails(ref data, out numResidents, out numRoomsOccupied);
+		    Singleton<CitizenManager>.instance.CreateUnits(out data.m_citizenUnits, ref Singleton<SimulationManager>.instance.m_randomizer, buildingID, 0, numResidents, workCount, 0, 0, 0);
+	    }
 
-        private delegate void GetWorkBehaviourDelegate(CommonBuildingAI instance, ushort buildingID, ref Building buildingData, ref Citizen.BehaviourData behaviour, ref int aliveCount, ref int totalCount);
-        private static GetWorkBehaviourDelegate BaseGetWorkBehaviour = AccessTools.MethodDelegate<GetWorkBehaviourDelegate>(typeof(CommonBuildingAI).GetMethod("GetWorkBehaviour", BindingFlags.Instance | BindingFlags.NonPublic), null, false);
+        public override void BuildingLoaded(ushort buildingID, ref Building data, uint version)
+	    {
+		    base.BuildingLoaded(buildingID, ref data, version);
+            int numResidents;
+            int numRoomsOccupied;
+            getOccupancyDetails(ref data, out numResidents, out numRoomsOccupied);
+		    int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
+		    EnsureCitizenUnits(buildingID, ref data, numResidents, workCount, 0, 0);
+	    }
 
-        private delegate void HandleWorkPlacesDelegate(CommonBuildingAI instance, ushort buildingID, ref Building data, int workPlaces0, int workPlaces1, int workPlaces2, int workPlaces3, ref Citizen.BehaviourData behaviour, int aliveWorkerCount, int totalWorkerCount);
-        private static HandleWorkPlacesDelegate BaseHandleWorkPlaces = AccessTools.MethodDelegate<HandleWorkPlacesDelegate>(typeof(CommonBuildingAI).GetMethod("HandleWorkPlaces", BindingFlags.Instance | BindingFlags.NonPublic), null, false);
+        public override void EndRelocating(ushort buildingID, ref Building data)
+	    {
+		    base.EndRelocating(buildingID, ref data);
+		    int numResidents;
+            int numRoomsOccupied;
+            getOccupancyDetails(ref data, out numResidents, out numRoomsOccupied);
+		    int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
+		    EnsureCitizenUnits(buildingID, ref data, numResidents, workCount, 0, 0);
+	    }
 
-        [HarmonyPatch(typeof(EldercareAI), "ProduceGoods")]
-        [HarmonyPostfix]
-        public static void ProduceGoods(EldercareAI __instance, ushort buildingID, ref Building buildingData, ref Building.Frame frameData, int productionRate, int finalProductionRate, ref Citizen.BehaviourData behaviour, int aliveWorkerCount, int totalWorkerCount, int workPlaceCount, int aliveVisitorCount, int totalVisitorCount, int visitPlaceCount) {
-            BaseProduceGoods(__instance, buildingID, ref buildingData, ref frameData, productionRate, finalProductionRate, ref behaviour, aliveWorkerCount, totalWorkerCount, workPlaceCount, aliveVisitorCount, totalVisitorCount, visitPlaceCount);
-            if(__instance is NursingHomeAI instance)
-            {
-                // Make sure there are no problems
-                if ((buildingData.m_problems & (Notification.Problem.MajorProblem | Notification.Problem.Electricity | Notification.Problem.ElectricityNotConnected | Notification.Problem.Fire | Notification.Problem.NoWorkers | Notification.Problem.Water | Notification.Problem.WaterNotConnected | Notification.Problem.RoadNotConnected | Notification.Problem.TurnedOff)) != Notification.Problem.None) {
-                    return;
-                }
+        protected override void ManualActivation(ushort buildingID, ref Building buildingData) 
+        {
+            int elderCareAccumulation = GetElderCareAccumulation();
+		    if (elderCareAccumulation != 0)
+		    {
+                NotificationEvent.Type notificationEventType = (quality >= 2 ? NotificationEvent.Type.Happy : NotificationEvent.Type.Sad);
+                NotificationEvent.Type notificationWaveEventType = (notificationEventType == NotificationEvent.Type.Happy ? NotificationEvent.Type.GainHappiness : NotificationEvent.Type.LoseHappiness);
+			    Vector3 position = buildingData.m_position;
+			    position.y += m_info.m_size.y;
+			    Singleton<NotificationManager>.instance.AddEvent(NotificationEvent.Type.GainHealth, position, 1.5f);
+                Singleton<NotificationManager>.instance.AddEvent(notificationEventType, position, 1.5f);
+			    Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.Happy, ImmaterialResourceManager.Resource.ElderCare, elderCareAccumulation, m_healthCareRadius);
+                Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, notificationWaveEventType, ImmaterialResourceManager.Resource.ElderCare, QUALITY_VALUES[quality], operationRadius);
+            }
+        }
 
-                // Make sure there are empty rooms available
-                uint emptyRoom = instance.getEmptyCitizenUnit(ref buildingData);
-                if (emptyRoom == 0) {
-                    return;
-                }
+        protected override void ManualDeactivation(ushort buildingID, ref Building buildingData) {
+            if ((buildingData.m_flags & Building.Flags.Collapsed) != 0)
+		    {
+			    Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.Happy, ImmaterialResourceManager.Resource.Abandonment, -buildingData.Width * buildingData.Length, 64f);
+			    return;
+		    }
+		    int elderCareAccumulation = GetElderCareAccumulation();
+		    if (elderCareAccumulation != 0)
+		    {
+                NotificationEvent.Type notificationEventType = (quality < 2 ? NotificationEvent.Type.Happy : NotificationEvent.Type.Sad);
+                NotificationEvent.Type notificationWaveEventType = (notificationEventType == NotificationEvent.Type.Happy ? NotificationEvent.Type.GainHappiness : NotificationEvent.Type.LoseHappiness);
+			    Vector3 position = buildingData.m_position;
+			    position.y += m_info.m_size.y;
+			    Singleton<NotificationManager>.instance.AddEvent(NotificationEvent.Type.LoseHealth, position, 1.5f);
+                Singleton<NotificationManager>.instance.AddEvent(notificationEventType, position, 1.5f);
+			    Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.Sad, ImmaterialResourceManager.Resource.ElderCare, -elderCareAccumulation, m_healthCareRadius);
+                Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, notificationWaveEventType, ImmaterialResourceManager.Resource.DeathCare, -QUALITY_VALUES[quality], operationRadius);
+		    }
+        }
 
-                // Fetch a Senior Citizen
-                SeniorCitizenManager seniorCitizenManager = SeniorCitizenManager.getInstance();
-                uint[] familyWithSeniors = seniorCitizenManager.getFamilyWithSenior();
-                if (familyWithSeniors == null) {
-                    // No Family Located
-                    return;
-                }
+        protected override void HandleWorkAndVisitPlaces(ushort buildingID, ref Building buildingData, ref Citizen.BehaviourData behaviour, ref int aliveWorkerCount, ref int totalWorkerCount, ref int workPlaceCount, ref int aliveVisitorCount, ref int totalVisitorCount, ref int visitPlaceCount) {
+            workPlaceCount += numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
+		    GetWorkBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveWorkerCount, ref totalWorkerCount);
+		    HandleWorkPlaces(buildingID, ref buildingData, numUneducatedWorkers, numEducatedWorkers, numWellEducatedWorkers, numHighlyEducatedWorkers, ref behaviour, aliveWorkerCount, totalWorkerCount);
+        }
 
-                Logger.logInfo(LOG_PRODUCTION, "------------------------------------------------------------");
-                Logger.logInfo(LOG_PRODUCTION, "NursingHomeAi.ProduceGoods -- Family: {0}", string.Join(", ", Array.ConvertAll(familyWithSeniors, item => item.ToString())));
-
-                // Check move in chance
-                NumWorkers numWorkers = instance.getNumWorkers(ref behaviour);
-                bool shouldMoveIn = MoveInProbabilityHelper.checkIfShouldMoveIn(familyWithSeniors, ref buildingData, ref instance.randomizer, instance.operationRadius, instance.quality, ref numWorkers);
-
-                // Process the seniors and move them in if able to, mark the seniors as done processing regardless
-                CitizenManager citizenManager = Singleton<CitizenManager>.instance;
-                foreach (uint familyMember in familyWithSeniors) {
-                    if (seniorCitizenManager.isSenior(familyMember)) {
-                        if (shouldMoveIn) {
-                            Logger.logInfo(LOG_PRODUCTION, "NursingHomeAi.ProduceGoods -- Moving In: {0}", familyMember);
-                            citizenManager.m_citizens.m_buffer[familyMember].SetHome(familyMember, buildingID, emptyRoom);
-                        }
-                        seniorCitizenManager.doneProcessingSenior(familyMember);
+        public override void SimulationStep(ushort buildingID, ref Building buildingData, ref Building.Frame frameData)
+	    {
+		    base.SimulationStep(buildingID, ref buildingData, ref frameData);
+		    if ((buildingData.m_flags & Building.Flags.Active) == 0)
+		    {
+			    Citizen.BehaviourData behaviour = default(Citizen.BehaviourData);
+			    int aliveCount = 0;
+			    int totalCount = 0;
+                int homeCount = 0;
+                int aliveHomeCount = 0;
+                int emptyHomeCount = 0;
+                GetHomeBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveCount, ref totalCount, ref homeCount, ref aliveHomeCount, ref emptyHomeCount);
+                buildingData.m_customBuffer1 = (ushort)aliveCount;
+                int health = 0;
+                float radius = (float) (buildingData.Width + buildingData.Length) * 2.5f;
+                if (behaviour.m_healthAccumulation != 0) {
+                    if (aliveCount != 0) {
+                        health = (behaviour.m_healthAccumulation + (aliveCount >> 1)) / aliveCount;
                     }
+                    Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Health, behaviour.m_healthAccumulation, buildingData.m_position, radius);
+                }
+                Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- health: {0}", health);
+
+                // Get the Wellbeing
+                int wellbeing = 0;
+                if (behaviour.m_wellbeingAccumulation != 0) {
+                    if (aliveCount != 0) {
+                        wellbeing = (behaviour.m_wellbeingAccumulation + (aliveCount >> 1)) / aliveCount;
+                    }
+                    Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Wellbeing, behaviour.m_wellbeingAccumulation, buildingData.m_position, radius);
+                }
+                Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- wellbeing: {0}", wellbeing);
+
+                // Calculate Happiness
+                int happiness = Citizen.GetHappiness(health, wellbeing);
+                if ((buildingData.m_problems & Notification.Problem.MajorProblem) != Notification.Problem.None) {
+                    happiness -= happiness >> 1;
+                } else if (buildingData.m_problems != Notification.Problem.None) {
+                    happiness -= happiness >> 2;
+                }
+                Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- happiness: {0}", happiness);
+
+                // Handle custom maintenance in addition to the standard maintenance handled in the base class
+                handleAdditionalMaintenanceCost(ref buildingData);
+		    }
+	    }
+
+        protected override void ProduceGoods(ushort buildingID, ref Building buildingData, ref Building.Frame frameData, int productionRate, int finalProductionRate, ref Citizen.BehaviourData behaviour, int aliveWorkerCount, int totalWorkerCount, int workPlaceCount, int aliveVisitorCount, int totalVisitorCount, int visitPlaceCount) {
+            base.ProduceGoods(buildingID, ref buildingData, ref frameData, productionRate, finalProductionRate, ref behaviour, aliveWorkerCount, totalWorkerCount, workPlaceCount, aliveVisitorCount, totalVisitorCount, visitPlaceCount);
+		    int num = productionRate * GetElderCareAccumulation() / 100;
+		    if (num != 0)
+		    {
+			    Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.ElderCare, num, buildingData.m_position, m_healthCareRadius);
+		    }
+		    HandleDead(buildingID, ref buildingData, ref behaviour, totalWorkerCount + totalVisitorCount);
+		    if (finalProductionRate != 0)
+		    {
+			    buildingData.m_customBuffer1 = (ushort)Mathf.Clamp(aliveVisitorCount, buildingData.m_customBuffer1, 65535);
+			    int num2 = Mathf.Min((finalProductionRate * PatientCapacity + 99) / 100, PatientCapacity * 5 / 4);
+			    int num3 = num2 - totalVisitorCount;
+			    if (num3 >= 1)
+			    {
+				    TransferManager.TransferOffer offer = default(TransferManager.TransferOffer);
+				    offer.Priority = Mathf.Max(1, num3 * 8 / num2);
+				    offer.Building = buildingID;
+				    offer.Position = buildingData.m_position;
+				    offer.Amount = num3;
+				    Singleton<TransferManager>.instance.AddOutgoingOffer(TransferManager.TransferReason.ElderCare, offer);
+			    }
+		    }
+            // Make sure there are no problems
+            if ((buildingData.m_problems & (Notification.Problem.MajorProblem | Notification.Problem.Electricity | Notification.Problem.ElectricityNotConnected | Notification.Problem.Fire | Notification.Problem.NoWorkers | Notification.Problem.Water | Notification.Problem.WaterNotConnected | Notification.Problem.RoadNotConnected | Notification.Problem.TurnedOff)) != Notification.Problem.None) {
+                return;
+            }
+
+            // Make sure there are empty rooms available
+            uint emptyRoom = getEmptyCitizenUnit(ref buildingData);
+            if (emptyRoom == 0) {
+                return;
+            }
+
+            // Fetch a Senior Citizen
+            SeniorCitizenManager seniorCitizenManager = SeniorCitizenManager.getInstance();
+            uint[] familyWithSeniors = seniorCitizenManager.getFamilyWithSenior();
+            if (familyWithSeniors == null) {
+                // No Family Located
+                return;
+            }
+
+            Logger.logInfo(LOG_PRODUCTION, "------------------------------------------------------------");
+            Logger.logInfo(LOG_PRODUCTION, "NursingHomeAi.ProduceGoods -- Family: {0}", string.Join(", ", Array.ConvertAll(familyWithSeniors, item => item.ToString())));
+
+            // Check move in chance
+            NumWorkers numWorkers = getNumWorkers(ref behaviour);
+            bool shouldMoveIn = MoveInProbabilityHelper.checkIfShouldMoveIn(familyWithSeniors, ref buildingData, ref randomizer, operationRadius, quality, ref numWorkers);
+
+            // Process the seniors and move them in if able to, mark the seniors as done processing regardless
+            CitizenManager citizenManager = Singleton<CitizenManager>.instance;
+            foreach (uint familyMember in familyWithSeniors) {
+                if (seniorCitizenManager.isSenior(familyMember)) {
+                    if (shouldMoveIn) {
+                        Logger.logInfo(LOG_PRODUCTION, "NursingHomeAi.ProduceGoods -- Moving In: {0}", familyMember);
+                        citizenManager.m_citizens.m_buffer[familyMember].SetHome(familyMember, buildingID, emptyRoom);
+                    }
+                    seniorCitizenManager.doneProcessingSenior(familyMember);
                 }
             }
-            
         }
 
-        [HarmonyPatch(typeof(EldercareAI), "HandleWorkAndVisitPlaces")]
-        [HarmonyPostfix]
-        public static void HandleWorkAndVisitPlaces(EldercareAI __instance, ushort buildingId, ref Building buildingData, ref Citizen.BehaviourData behaviour, ref int aliveWorkerCount, ref int totalWorkerCount, ref int workPlaceCount, ref int aliveVisitorCount, ref int totalVisitorCount, ref int visitPlaceCount) {
-            if(__instance is NursingHomeAI instance)
-            {
-                workPlaceCount = workPlaceCount + instance.numUneducatedWorkers + instance.numEducatedWorkers + instance.numWellEducatedWorkers + instance.numHighlyEducatedWorkers;
-                BaseGetWorkBehaviour(__instance, buildingId, ref buildingData, ref behaviour, ref aliveWorkerCount, ref totalWorkerCount);
-                BaseHandleWorkPlaces(__instance, buildingId, ref buildingData, instance.numUneducatedWorkers, instance.numEducatedWorkers, instance.numWellEducatedWorkers, instance.numHighlyEducatedWorkers, ref behaviour, aliveWorkerCount, totalWorkerCount);
-            }
+        public override string GetLocalizedTooltip()
+	    {
+		    string text = LocaleFormatter.FormatGeneric("AIINFO_WATER_CONSUMPTION", GetWaterConsumption() * 16) + Environment.NewLine + LocaleFormatter.FormatGeneric("AIINFO_ELECTRICITY_CONSUMPTION", GetElectricityConsumption() * 16);
+		    return text;
+	    }
+        public override string GetLocalizedStats(ushort buildingId, ref Building data) {
+            int numResidents;
+            int numRoomsOccupied;
+            getOccupancyDetails(ref data, out numResidents, out numRoomsOccupied);
+            // Get Worker Data
+            Citizen.BehaviourData workerBehaviourData = new Citizen.BehaviourData();
+            int aliveWorkerCount = 0;
+            int totalWorkerCount = 0;
+            GetWorkBehaviour(buildingId, ref data, ref workerBehaviourData, ref aliveWorkerCount, ref totalWorkerCount);
             
-        }
-
-        [HarmonyPatch(typeof(EldercareAI), "GetLocalizedStats")]
-        [HarmonyPostfix]
-        public static void GetLocalizedStats(EldercareAI __instance, ushort buildingId, ref Building data, ref string __result) {
-            if(__instance is NursingHomeAI instance)
-            {
-                int numResidents;
-                int numRoomsOccupied;
-                instance.getOccupancyDetails(ref data, out numResidents, out numRoomsOccupied);
-                // Get Worker Data
-                Citizen.BehaviourData workerBehaviourData = new Citizen.BehaviourData();
-                int aliveWorkerCount = 0;
-                int totalWorkerCount = 0;
-                BaseGetWorkBehaviour(__instance, buildingId, ref data, ref workerBehaviourData, ref aliveWorkerCount, ref totalWorkerCount);
-            
-                // Build Stats
-                // TODO: Localize!!!
-                StringBuilder stringBuilder = new StringBuilder();
-                stringBuilder.Append(string.Format("Uneducated Workers: {0} of {1}", workerBehaviourData.m_educated0Count, instance.numUneducatedWorkers));
-                stringBuilder.Append(Environment.NewLine);
-                stringBuilder.Append(string.Format("Educated Workers: {0} of {1}", workerBehaviourData.m_educated1Count, instance.numEducatedWorkers));
-                stringBuilder.Append(Environment.NewLine);
-                stringBuilder.Append(string.Format("Well Educated Workers: {0} of {1}", workerBehaviourData.m_educated2Count, instance.numWellEducatedWorkers));
-                stringBuilder.Append(Environment.NewLine);
-                stringBuilder.Append(string.Format("Highly Educated Workers: {0} of {1}", workerBehaviourData.m_educated3Count, instance.numHighlyEducatedWorkers));
-                stringBuilder.Append(Environment.NewLine);
-                stringBuilder.Append(Environment.NewLine);
-                stringBuilder.Append(string.Format("Nursing Home Quality: {0}", instance.quality));
-                stringBuilder.Append(Environment.NewLine);
-                stringBuilder.Append(string.Format("Rooms Occupied: {0} of {1}", numRoomsOccupied, instance.getModifiedCapacity()));
-                stringBuilder.Append(Environment.NewLine);
-                stringBuilder.Append(string.Format("Number of Residents: {0}", numResidents));
-                __result = stringBuilder.ToString();
-            }
-            
-        }
-
-        [HarmonyPatch(typeof(EldercareAI), "ManualActivation")]
-        [HarmonyPostfix]
-        public static void ManualActivation(EldercareAI __instance, ushort buildingId, ref Building buildingData) {
-            if(__instance is NursingHomeAI instance)
-            {
-                NotificationEvent.Type notificationEventType = (instance.quality >= 2 ? NotificationEvent.Type.Happy : NotificationEvent.Type.Sad);
-                NotificationEvent.Type notificationWaveEventType = (notificationEventType == NotificationEvent.Type.Happy ? NotificationEvent.Type.GainHappiness : NotificationEvent.Type.LoseHappiness);
-                Vector3 position = buildingData.m_position;
-                position.y += instance.m_info.m_size.y;
-                Singleton<NotificationManager>.instance.AddEvent(notificationEventType, position, 1.5f);
-                Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, notificationWaveEventType, ImmaterialResourceManager.Resource.DeathCare, QUALITY_VALUES[instance.quality], instance.operationRadius);
-            }
-        }
-
-        [HarmonyPatch(typeof(EldercareAI), "ManualDeactivation")]
-        [HarmonyPostfix]
-        public static void ManualDeactivation(EldercareAI __instance, ushort buildingId, ref Building buildingData) {
-            if(__instance is NursingHomeAI instance)
-            {
-                NotificationEvent.Type notificationEventType = (instance.quality < 2 ? NotificationEvent.Type.Happy : NotificationEvent.Type.Sad);
-                NotificationEvent.Type notificationWaveEventType = (notificationEventType == NotificationEvent.Type.Happy ? NotificationEvent.Type.GainHappiness : NotificationEvent.Type.LoseHappiness);
-                Vector3 position = buildingData.m_position;
-                position.y += instance.m_info.m_size.y;
-                Singleton<NotificationManager>.instance.AddEvent(notificationEventType, position, 1.5f);
-                Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, notificationWaveEventType, ImmaterialResourceManager.Resource.DeathCare, -QUALITY_VALUES[instance.quality], instance.operationRadius);
-            } 
+            // Build Stats
+            // TODO: Localize!!!
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.Append(string.Format("Uneducated Workers: {0} of {1}", workerBehaviourData.m_educated0Count, numUneducatedWorkers));
+            stringBuilder.Append(Environment.NewLine);
+            stringBuilder.Append(string.Format("Educated Workers: {0} of {1}", workerBehaviourData.m_educated1Count, numEducatedWorkers));
+            stringBuilder.Append(Environment.NewLine);
+            stringBuilder.Append(string.Format("Well Educated Workers: {0} of {1}", workerBehaviourData.m_educated2Count, numWellEducatedWorkers));
+            stringBuilder.Append(Environment.NewLine);
+            stringBuilder.Append(string.Format("Highly Educated Workers: {0} of {1}", workerBehaviourData.m_educated3Count, numHighlyEducatedWorkers));
+            stringBuilder.Append(Environment.NewLine);
+            stringBuilder.Append(Environment.NewLine);
+            stringBuilder.Append(string.Format("Nursing Home Quality: {0}", quality));
+            stringBuilder.Append(Environment.NewLine);
+            stringBuilder.Append(string.Format("Rooms Occupied: {0} of {1}", numRoomsOccupied, getModifiedCapacity()));
+            stringBuilder.Append(Environment.NewLine);
+            stringBuilder.Append(string.Format("Number of Residents: {0}", numResidents));
+            return stringBuilder.ToString();
         }
 
         private int getCustomMaintenanceCost(ref Building buildingData) {
@@ -268,51 +350,6 @@ namespace SeniorCitizenCenterMod {
             return numWorkers;
         }
 
-        protected override void SimulationStepActive(ushort buildingID, ref Building buildingData, ref Building.Frame frameData) {
-            Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive");
-            Citizen.BehaviourData behaviour = new Citizen.BehaviourData();
-            int aliveCount = 0;
-            int totalCount = 0;
-            int homeCount = 0;
-            int aliveHomeCount = 0;
-            int emptyHomeCount = 0;
-            this.GetHomeBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveCount, ref totalCount, ref homeCount, ref aliveHomeCount, ref emptyHomeCount);
-
-            // Get the Health
-            int health = 0;
-            float radius = (float) (buildingData.Width + buildingData.Length) * 2.5f;
-            if (behaviour.m_healthAccumulation != 0) {
-                if (aliveCount != 0) {
-                    health = (behaviour.m_healthAccumulation + (aliveCount >> 1)) / aliveCount;
-                }
-                Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Health, behaviour.m_healthAccumulation, buildingData.m_position, radius);
-            }
-            Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- health: {0}", health);
-
-            // Get the Wellbeing
-            int wellbeing = 0;
-            if (behaviour.m_wellbeingAccumulation != 0) {
-                if (aliveCount != 0) {
-                    wellbeing = (behaviour.m_wellbeingAccumulation + (aliveCount >> 1)) / aliveCount;
-                }
-                Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Wellbeing, behaviour.m_wellbeingAccumulation, buildingData.m_position, radius);
-            }
-            Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- wellbeing: {0}", wellbeing);
-
-            // Calculate Happiness
-            int happiness = Citizen.GetHappiness(health, wellbeing);
-            if ((buildingData.m_problems & Notification.Problem.MajorProblem) != Notification.Problem.None) {
-                happiness -= happiness >> 1;
-            } else if (buildingData.m_problems != Notification.Problem.None) {
-                happiness -= happiness >> 2;
-            }
-            Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- happiness: {0}", happiness);
-
-            // Handle custom maintenance in addition to the standard maintenance handled in the base class
-            handleAdditionalMaintenanceCost(ref buildingData);
-            base.SimulationStepActive(buildingID, ref buildingData, ref frameData);
-        }
-
         private int GetAverageResidentRequirement(ushort buildingID, ref Building data, ImmaterialResourceManager.Resource resource) {
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
             uint citizenUnit = data.m_citizenUnits;
@@ -383,7 +420,6 @@ namespace SeniorCitizenCenterMod {
                     return 100;
             }
         }
-
 
         public override float GetEventImpact(ushort buildingID, ref Building data, ImmaterialResourceManager.Resource resource, float amount) {
             if ((data.m_flags & (Building.Flags.Abandoned | Building.Flags.BurnedDown)) != Building.Flags.None)
