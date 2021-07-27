@@ -83,7 +83,7 @@ namespace SeniorCitizenCenterMod {
 			    Singleton<NotificationManager>.instance.AddEvent(NotificationEvent.Type.GainHealth, position, 1.5f);
                 Singleton<NotificationManager>.instance.AddEvent(NotificationEvent.Type.Happy, position, 1.5f);
 			    Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.Happy, ImmaterialResourceManager.Resource.ElderCare, elderCareAccumulation, m_healthCareRadius);
-                Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.GainHappiness, ImmaterialResourceManager.Resource.ElderCare, QUALITY_VALUES[quality], operationRadius);
+                Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.GainHappiness, ImmaterialResourceManager.Resource.ElderCare, QUALITY_VALUES[quality-1], operationRadius);
             }
         }
 
@@ -101,7 +101,7 @@ namespace SeniorCitizenCenterMod {
 			    Singleton<NotificationManager>.instance.AddEvent(NotificationEvent.Type.LoseHealth, position, 1.5f);
                 Singleton<NotificationManager>.instance.AddEvent(NotificationEvent.Type.Sad, position, 1.5f);
 			    Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.Sad, ImmaterialResourceManager.Resource.ElderCare, -elderCareAccumulation, m_healthCareRadius);
-                Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.LoseHappiness, ImmaterialResourceManager.Resource.DeathCare, -QUALITY_VALUES[quality], operationRadius);
+                Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.LoseHappiness, ImmaterialResourceManager.Resource.DeathCare, -QUALITY_VALUES[quality-1], operationRadius);
 		    }
         }
 
@@ -512,12 +512,6 @@ namespace SeniorCitizenCenterMod {
             garbageAccumulation = 0;
             incomeAccumulation = 0;
             switch (quality) {
-                case 0:
-                    electricityConsumption = 20;
-                    waterConsumption = 45;
-                    sewageAccumulation = 45;
-                    garbageAccumulation = 40;
-                    break;
                 case 1:
                     electricityConsumption = 18;
                     waterConsumption = 40;

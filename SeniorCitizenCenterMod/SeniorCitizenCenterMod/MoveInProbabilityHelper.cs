@@ -155,20 +155,6 @@ namespace SeniorCitizenCenterMod {
             Citizen.Wealth wealth = getFamilyWealth(familyWithSeniors);
             float chance = NO_CHANCE;
             switch (quality) {
-                case 0:
-                    // Quality 0 homes are more for jokes, so better chance to move into a 0 quality than a 1 quality
-                    switch (wealth) {
-                        case Citizen.Wealth.High:
-                            chance = QUALITY_MAX_CHANCE_VALUE * -0.5f;
-                            break;
-                        case Citizen.Wealth.Medium:
-                            chance = QUALITY_MAX_CHANCE_VALUE * 0.25f;
-                            break;
-                        case Citizen.Wealth.Low:
-                            chance = QUALITY_MAX_CHANCE_VALUE * 2f;
-                            break;
-                    }
-                    break;
                 case 1:
                     // Quality 1's should be mainly for Low Wealth citizens, but not impossible for medium
                     switch (wealth) {
