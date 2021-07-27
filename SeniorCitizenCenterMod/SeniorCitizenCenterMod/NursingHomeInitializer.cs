@@ -107,7 +107,7 @@ namespace SeniorCitizenCenterMod {
                     // Check for replacement of AI
                     if (buildingInfo != null)
                     {
-                        if(buildingInfo.name != "Eldercare 01" && buildingInfo.GetAI() is EldercareAI)
+                        if(buildingInfo.GetAI() is NursingHomeAI)
                         {
                             AiReplacementHelper.ApplyNewAIToBuilding(buildingInfo);
                         }
