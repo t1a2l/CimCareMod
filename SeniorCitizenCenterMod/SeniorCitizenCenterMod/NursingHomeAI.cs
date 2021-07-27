@@ -241,6 +241,7 @@ namespace SeniorCitizenCenterMod {
             stringBuilder.Append(Environment.NewLine);
             stringBuilder.Append(string.Format("Eldercare users in the city: {0}", global));
             stringBuilder.Append(Environment.NewLine);
+            stringBuilder.Append(Environment.NewLine);
             stringBuilder.Append(string.Format("Uneducated Workers: {0} of {1}", workerBehaviourData.m_educated0Count, numUneducatedWorkers));
             stringBuilder.Append(Environment.NewLine);
             stringBuilder.Append(string.Format("Educated Workers: {0} of {1}", workerBehaviourData.m_educated1Count, numEducatedWorkers));
