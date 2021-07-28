@@ -47,30 +47,39 @@ namespace SeniorCitizenCenterMod {
 	    {
 		    base.CreateBuilding(buildingID, ref data);
 		    int workCount = m_workPlaceCount0 + m_workPlaceCount1 + m_workPlaceCount2 + m_workPlaceCount3;
-            int numResidents;
-            int numRoomsOccupied;
-            getOccupancyDetails(ref data, out numResidents, out numRoomsOccupied);
-		    Singleton<CitizenManager>.instance.CreateUnits(out data.m_citizenUnits, ref Singleton<SimulationManager>.instance.m_randomizer, buildingID, 0, numResidents, workCount, PatientCapacity, 0, 0);
-	    }
+		    Singleton<CitizenManager>.instance.CreateUnits(out data.m_citizenUnits, ref Singleton<SimulationManager>.instance.m_randomizer, buildingID, 0, getModifiedCapacity(), workCount, PatientCapacity, 0, 0);
+	        // Ensure quality is within bounds
+            if (quality < 1) {
+                quality = 1;
+            } else if (quality > 4) {
+                quality = 4;
+            }
+        }
 
         public override void BuildingLoaded(ushort buildingID, ref Building data, uint version)
 	    {
 		    base.BuildingLoaded(buildingID, ref data, version);
-            int numResidents;
-            int numRoomsOccupied;
-            getOccupancyDetails(ref data, out numResidents, out numRoomsOccupied);
+           
+            // Validate the capacity and adjust accordingly - but don't create new units, that will be done by EnsureCitizenUnits
+            float capcityModifier = SeniorCitizenCenterMod.getInstance().getOptionsManager().getCapacityModifier();
+            this.updateCapacity(capcityModifier);
+            this.validateCapacity(buildingID, ref data, false);
+
 		    int workCount = m_workPlaceCount0 + m_workPlaceCount1 + m_workPlaceCount2 + m_workPlaceCount3;
-		    EnsureCitizenUnits(buildingID, ref data, numResidents, workCount, PatientCapacity, 0);
+		    EnsureCitizenUnits(buildingID, ref data, getModifiedCapacity(), workCount, PatientCapacity, 0);
 	    }
 
         public override void EndRelocating(ushort buildingID, ref Building data)
 	    {
 		    base.EndRelocating(buildingID, ref data);
-		    int numResidents;
-            int numRoomsOccupied;
-            getOccupancyDetails(ref data, out numResidents, out numRoomsOccupied);
+
+            // Validate the capacity and adjust accordingly - but don't create new units, that will be done by EnsureCitizenUnits
+            float capcityModifier = SeniorCitizenCenterMod.getInstance().getOptionsManager().getCapacityModifier();
+            this.updateCapacity(capcityModifier);
+            this.validateCapacity(buildingID, ref data, false);
+
 		    int workCount = m_workPlaceCount0 + m_workPlaceCount1 + m_workPlaceCount2 + m_workPlaceCount3;
-		    EnsureCitizenUnits(buildingID, ref data, numResidents, workCount, PatientCapacity, 0);
+		    EnsureCitizenUnits(buildingID, ref data, getModifiedCapacity(), workCount, PatientCapacity, 0);
 	    }
 
         protected override void ManualActivation(ushort buildingID, ref Building buildingData) 
@@ -83,7 +92,7 @@ namespace SeniorCitizenCenterMod {
 			    Singleton<NotificationManager>.instance.AddEvent(NotificationEvent.Type.GainHealth, position, 1.5f);
                 Singleton<NotificationManager>.instance.AddEvent(NotificationEvent.Type.Happy, position, 1.5f);
 			    Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.Happy, ImmaterialResourceManager.Resource.ElderCare, elderCareAccumulation, m_healthCareRadius);
-                Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.GainHappiness, ImmaterialResourceManager.Resource.ElderCare, QUALITY_VALUES[quality-1], operationRadius);
+                Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.GainHappiness, ImmaterialResourceManager.Resource.DeathCare, QUALITY_VALUES[quality], operationRadius);
             }
         }
 
@@ -101,7 +110,7 @@ namespace SeniorCitizenCenterMod {
 			    Singleton<NotificationManager>.instance.AddEvent(NotificationEvent.Type.LoseHealth, position, 1.5f);
                 Singleton<NotificationManager>.instance.AddEvent(NotificationEvent.Type.Sad, position, 1.5f);
 			    Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.Sad, ImmaterialResourceManager.Resource.ElderCare, -elderCareAccumulation, m_healthCareRadius);
-                Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.LoseHappiness, ImmaterialResourceManager.Resource.DeathCare, -QUALITY_VALUES[quality-1], operationRadius);
+                Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.LoseHappiness, ImmaterialResourceManager.Resource.DeathCare, -QUALITY_VALUES[quality], operationRadius);
 		    }
         }
 
