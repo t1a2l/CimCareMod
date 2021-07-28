@@ -16,23 +16,6 @@ namespace SeniorCitizenCenterMod {
 
         private Randomizer randomizer = new Randomizer(97);
 
-        public int numUneducatedWorkers = 5;
-
-        public int numEducatedWorkers = 5;
-
-        public int numWellEducatedWorkers = 5;
-
-        public int numHighlyEducatedWorkers = 4;
-
-        public NursingHomeAI()
-        {
-            m_workPlaceCount0 = numUneducatedWorkers;
-            m_workPlaceCount1 = numEducatedWorkers;
-            m_workPlaceCount2 = numWellEducatedWorkers;
-            m_workPlaceCount3 = numHighlyEducatedWorkers;
-        }
-
-
         [CustomizableProperty("Number of Rooms")]
         public int numRooms = 25;
         private float capacityModifier = 1.0f;
@@ -45,15 +28,15 @@ namespace SeniorCitizenCenterMod {
 
         public override void CreateBuilding(ushort buildingID, ref Building data)
 	    {
-		    base.CreateBuilding(buildingID, ref data);
-		    int workCount = m_workPlaceCount0 + m_workPlaceCount1 + m_workPlaceCount2 + m_workPlaceCount3;
-		    Singleton<CitizenManager>.instance.CreateUnits(out data.m_citizenUnits, ref Singleton<SimulationManager>.instance.m_randomizer, buildingID, 0, getModifiedCapacity(), workCount, PatientCapacity, 0, 0);
-	        // Ensure quality is within bounds
+            // Ensure quality is within bounds
             if (quality < 1) {
                 quality = 1;
             } else if (quality > 4) {
                 quality = 4;
             }
+		    base.CreateBuilding(buildingID, ref data);
+		    int workCount = m_workPlaceCount0 + m_workPlaceCount1 + m_workPlaceCount2 + m_workPlaceCount3;
+		    Singleton<CitizenManager>.instance.CreateUnits(out data.m_citizenUnits, ref Singleton<SimulationManager>.instance.m_randomizer, buildingID, 0, getModifiedCapacity(), workCount, PatientCapacity, 0, 0);
         }
 
         public override void BuildingLoaded(ushort buildingID, ref Building data, uint version)
