@@ -16,6 +16,18 @@ namespace SeniorCitizenCenterMod {
 
         private Randomizer randomizer = new Randomizer(97);
 
+        [CustomizableProperty("Uneducated Workers", "Workers", 0)]
+        public int numUneducatedWorkers = 5;
+
+        [CustomizableProperty("Educated Workers", "Workers", 1)]
+        public int numEducatedWorkers = 5;
+
+        [CustomizableProperty("Well Educated Workers", "Workers", 2)]
+        public int numWellEducatedWorkers = 5;
+
+        [CustomizableProperty("Highly Educated Workers", "Workers", 3)]
+        public int numHighlyEducatedWorkers = 4;
+
         [CustomizableProperty("Number of Rooms")]
         public int numRooms = 25;
         private float capacityModifier = 1.0f;
@@ -35,7 +47,7 @@ namespace SeniorCitizenCenterMod {
                 quality = 4;
             }
 		    base.CreateBuilding(buildingID, ref data);
-		    int workCount = m_workPlaceCount0 + m_workPlaceCount1 + m_workPlaceCount2 + m_workPlaceCount3;
+		    int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
 		    Singleton<CitizenManager>.instance.CreateUnits(out data.m_citizenUnits, ref Singleton<SimulationManager>.instance.m_randomizer, buildingID, 0, getModifiedCapacity(), workCount, PatientCapacity, 0, 0);
         }
 
@@ -48,7 +60,7 @@ namespace SeniorCitizenCenterMod {
             this.updateCapacity(capcityModifier);
             this.validateCapacity(buildingID, ref data, false);
 
-		    int workCount = m_workPlaceCount0 + m_workPlaceCount1 + m_workPlaceCount2 + m_workPlaceCount3;
+		    int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
 		    EnsureCitizenUnits(buildingID, ref data, getModifiedCapacity(), workCount, PatientCapacity, 0);
 	    }
 
@@ -61,7 +73,7 @@ namespace SeniorCitizenCenterMod {
             this.updateCapacity(capcityModifier);
             this.validateCapacity(buildingID, ref data, false);
 
-		    int workCount = m_workPlaceCount0 + m_workPlaceCount1 + m_workPlaceCount2 + m_workPlaceCount3;
+		    int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
 		    EnsureCitizenUnits(buildingID, ref data, getModifiedCapacity(), workCount, PatientCapacity, 0);
 	    }
 
@@ -98,9 +110,9 @@ namespace SeniorCitizenCenterMod {
         }
 
         protected override void HandleWorkAndVisitPlaces(ushort buildingID, ref Building buildingData, ref Citizen.BehaviourData behaviour, ref int aliveWorkerCount, ref int totalWorkerCount, ref int workPlaceCount, ref int aliveVisitorCount, ref int totalVisitorCount, ref int visitPlaceCount) {
-            workPlaceCount += m_workPlaceCount0 + m_workPlaceCount1 + m_workPlaceCount2 + m_workPlaceCount3;
+            workPlaceCount += numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
 		    GetWorkBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveWorkerCount, ref totalWorkerCount);
-		    HandleWorkPlaces(buildingID, ref buildingData, m_workPlaceCount0, m_workPlaceCount1, m_workPlaceCount2, m_workPlaceCount3, ref behaviour, aliveWorkerCount, totalWorkerCount);
+		    HandleWorkPlaces(buildingID, ref buildingData, numUneducatedWorkers, numEducatedWorkers, numWellEducatedWorkers, numHighlyEducatedWorkers, ref behaviour, aliveWorkerCount, totalWorkerCount);
             visitPlaceCount += PatientCapacity;
 		    GetVisitBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveVisitorCount, ref totalVisitorCount);
         }
@@ -239,13 +251,13 @@ namespace SeniorCitizenCenterMod {
             stringBuilder.Append(string.Format("Eldercare users in the city: {0}", global));
             stringBuilder.Append(Environment.NewLine);
             stringBuilder.Append(Environment.NewLine);
-            stringBuilder.Append(string.Format("Uneducated Workers: {0} of {1}", workerBehaviourData.m_educated0Count, m_workPlaceCount0));
+            stringBuilder.Append(string.Format("Uneducated Workers: {0} of {1}", workerBehaviourData.m_educated0Count, numUneducatedWorkers));
             stringBuilder.Append(Environment.NewLine);
-            stringBuilder.Append(string.Format("Educated Workers: {0} of {1}", workerBehaviourData.m_educated1Count, m_workPlaceCount1));
+            stringBuilder.Append(string.Format("Educated Workers: {0} of {1}", workerBehaviourData.m_educated1Count, numEducatedWorkers));
             stringBuilder.Append(Environment.NewLine);
-            stringBuilder.Append(string.Format("Well Educated Workers: {0} of {1}", workerBehaviourData.m_educated2Count, m_workPlaceCount2));
+            stringBuilder.Append(string.Format("Well Educated Workers: {0} of {1}", workerBehaviourData.m_educated2Count, numWellEducatedWorkers));
             stringBuilder.Append(Environment.NewLine);
-            stringBuilder.Append(string.Format("Highly Educated Workers: {0} of {1}", workerBehaviourData.m_educated3Count, m_workPlaceCount3));
+            stringBuilder.Append(string.Format("Highly Educated Workers: {0} of {1}", workerBehaviourData.m_educated3Count, numHighlyEducatedWorkers));
             stringBuilder.Append(Environment.NewLine);
             stringBuilder.Append(Environment.NewLine);
             stringBuilder.Append(string.Format("Nursing Home Quality: {0}", quality));
@@ -342,13 +354,13 @@ namespace SeniorCitizenCenterMod {
 
         private NumWorkers getNumWorkers(ref Citizen.BehaviourData workerBehaviourData) {
             NumWorkers numWorkers = new NumWorkers();
-            numWorkers.maxNumUneducatedWorkers = m_workPlaceCount0;
+            numWorkers.maxNumUneducatedWorkers = numUneducatedWorkers;
             numWorkers.numUneducatedWorkers = workerBehaviourData.m_educated0Count;
-            numWorkers.maxNumEducatedWorkers = m_workPlaceCount1;
+            numWorkers.maxNumEducatedWorkers = numEducatedWorkers;
             numWorkers.numEducatedWorkers = workerBehaviourData.m_educated1Count;
-            numWorkers.maxNumWellEducatedWorkers = m_workPlaceCount2;
+            numWorkers.maxNumWellEducatedWorkers = numWellEducatedWorkers;
             numWorkers.numWellEducatedWorkers = workerBehaviourData.m_educated2Count;
-            numWorkers.maxNumHighlyEducatedWorkers = m_workPlaceCount3;
+            numWorkers.maxNumHighlyEducatedWorkers = numHighlyEducatedWorkers;
             numWorkers.numHighlyEducatedWorkers = workerBehaviourData.m_educated3Count;
             return numWorkers;
         }

@@ -119,7 +119,7 @@ namespace SeniorCitizenCenterMod {
                     }
                     // Check for updating capacity - Existing NHs will be updated on-load, this will set the data used for placing new homes
                     if (this.loadedLevel == LOADED_LEVEL_GAME && buildingInfo != null && buildingInfo.m_buildingAI is NursingHomeAI nursingHomeAI) {
-                        nursingHomeAI.updateCapacity(capcityModifier);
+                        nursingHomeAI.updateCapacity(capcityModifier);  
                     }
                 }
                 yield return new WaitForEndOfFrame();
