@@ -12,7 +12,7 @@ namespace SeniorCitizenCenterMod {
         private const bool LOG_PRODUCTION = false;
         private const bool LOG_SIMULATION = false;
 
-        private static readonly float[] QUALITY_VALUES = { 10, 25, 50, 75, 125 };
+        private static readonly float[] QUALITY_VALUES = { 0, 10, 25, 50, 75, 125 };
 
         private Randomizer randomizer = new Randomizer(97);
 
@@ -43,8 +43,8 @@ namespace SeniorCitizenCenterMod {
             // Ensure quality is within bounds
             if (quality < 1) {
                 quality = 1;
-            } else if (quality > 4) {
-                quality = 4;
+            } else if (quality > 5) {
+                quality = 5;
             }
 		    base.CreateBuilding(buildingID, ref data);
 		    int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
@@ -169,7 +169,8 @@ namespace SeniorCitizenCenterMod {
 		    int num = productionRate * GetElderCareAccumulation() / 100;
 		    if (num != 0)
 		    {
-			    Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.ElderCare, num, buildingData.m_position, m_healthCareRadius);
+                float radius = (float) (buildingData.Width + buildingData.Length) * 2.5f;
+			    Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.ElderCare, num, buildingData.m_position, radius);
 		    }
 		    HandleDead(buildingID, ref buildingData, ref behaviour, totalWorkerCount + totalVisitorCount);
 		    if (finalProductionRate != 0)
