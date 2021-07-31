@@ -48,7 +48,7 @@ namespace SeniorCitizenCenterMod {
             }
 		    base.CreateBuilding(buildingID, ref data);
 		    int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
-		    Singleton<CitizenManager>.instance.CreateUnits(out data.m_citizenUnits, ref Singleton<SimulationManager>.instance.m_randomizer, buildingID, 0, getModifiedCapacity(), workCount, PatientCapacity, 0, 0);
+		    Singleton<CitizenManager>.instance.CreateUnits(out data.m_citizenUnits, ref Singleton<SimulationManager>.instance.m_randomizer, buildingID, 0, getModifiedCapacity(), workCount, 0, 0, 0);
         }
 
         public override void BuildingLoaded(ushort buildingID, ref Building data, uint version)
@@ -61,7 +61,7 @@ namespace SeniorCitizenCenterMod {
             this.validateCapacity(buildingID, ref data, false);
 
 		    int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
-		    EnsureCitizenUnits(buildingID, ref data, getModifiedCapacity(), workCount, PatientCapacity, 0);
+		    EnsureCitizenUnits(buildingID, ref data, getModifiedCapacity(), workCount, 0, 0);
 	    }
 
         public override void EndRelocating(ushort buildingID, ref Building data)
@@ -74,7 +74,7 @@ namespace SeniorCitizenCenterMod {
             this.validateCapacity(buildingID, ref data, false);
 
 		    int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
-		    EnsureCitizenUnits(buildingID, ref data, getModifiedCapacity(), workCount, PatientCapacity, 0);
+		    EnsureCitizenUnits(buildingID, ref data, getModifiedCapacity(), workCount, 0, 0);
 	    }
 
         protected override void ManualActivation(ushort buildingID, ref Building buildingData) 
@@ -113,8 +113,6 @@ namespace SeniorCitizenCenterMod {
             workPlaceCount += numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
 		    GetWorkBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveWorkerCount, ref totalWorkerCount);
 		    HandleWorkPlaces(buildingID, ref buildingData, numUneducatedWorkers, numEducatedWorkers, numWellEducatedWorkers, numHighlyEducatedWorkers, ref behaviour, aliveWorkerCount, totalWorkerCount);
-            visitPlaceCount += PatientCapacity;
-		    GetVisitBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveVisitorCount, ref totalVisitorCount);
         }
 
         public override void SimulationStep(ushort buildingID, ref Building buildingData, ref Building.Frame frameData)
@@ -165,29 +163,32 @@ namespace SeniorCitizenCenterMod {
 	    }
 
         protected override void ProduceGoods(ushort buildingID, ref Building buildingData, ref Building.Frame frameData, int productionRate, int finalProductionRate, ref Citizen.BehaviourData behaviour, int aliveWorkerCount, int totalWorkerCount, int workPlaceCount, int aliveVisitorCount, int totalVisitorCount, int visitPlaceCount) {
-            base.ProduceGoods(buildingID, ref buildingData, ref frameData, productionRate, finalProductionRate, ref behaviour, aliveWorkerCount, totalWorkerCount, workPlaceCount, aliveVisitorCount, totalVisitorCount, visitPlaceCount);
+            if (finalProductionRate != 0)
+	        {
+		        buildingData.m_flags |= Building.Flags.Active;
+		        if (m_supportEvents != 0 || buildingData.m_eventIndex != 0)
+		        {
+			        CheckEvents(buildingID, ref buildingData);
+		        }
+	        }
+	        else
+	        {
+		        buildingData.m_flags &= ~Building.Flags.Active;
+	        }            
 		    int num = productionRate * GetElderCareAccumulation() / 100;
 		    if (num != 0)
 		    {
-                float radius = (float) (buildingData.Width + buildingData.Length) * 2.5f;
+                float radius = (float) (buildingData.Width + buildingData.Length);
 			    Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.ElderCare, num, buildingData.m_position, radius);
 		    }
-		    HandleDead(buildingID, ref buildingData, ref behaviour, totalWorkerCount + totalVisitorCount);
-		    if (finalProductionRate != 0)
-		    {
-			    buildingData.m_customBuffer1 = (ushort)Mathf.Clamp(aliveVisitorCount, buildingData.m_customBuffer1, 65535);
-			    int num2 = Mathf.Min((finalProductionRate * PatientCapacity + 99) / 100, PatientCapacity * 5 / 4);
-			    int num3 = num2 - totalVisitorCount;
-			    if (num3 >= 1)
-			    {
-				    TransferManager.TransferOffer offer = default(TransferManager.TransferOffer);
-				    offer.Priority = Mathf.Max(1, num3 * 8 / num2);
-				    offer.Building = buildingID;
-				    offer.Position = buildingData.m_position;
-				    offer.Amount = num3;
-				    Singleton<TransferManager>.instance.AddOutgoingOffer(TransferManager.TransferReason.ElderCare, offer);
-			    }
-		    }
+            int aliveCount = 0;
+			int totalCount = 0;
+            int homeCount = 0;
+            int aliveHomeCount = 0;
+            int emptyHomeCount = 0;
+            GetHomeBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveCount, ref totalCount, ref homeCount, ref aliveHomeCount, ref emptyHomeCount);
+		    HandleDead(buildingID, ref buildingData, ref behaviour, totalWorkerCount + totalCount);
+
             // Make sure there are no problems
             if ((buildingData.m_problems & (Notification.Problem.MajorProblem | Notification.Problem.Electricity | Notification.Problem.ElectricityNotConnected | Notification.Problem.Fire | Notification.Problem.NoWorkers | Notification.Problem.Water | Notification.Problem.WaterNotConnected | Notification.Problem.RoadNotConnected | Notification.Problem.TurnedOff)) != Notification.Problem.None) {
                 return;
@@ -229,15 +230,13 @@ namespace SeniorCitizenCenterMod {
 
         public override string GetLocalizedTooltip()
 	    {
-		    string text = LocaleFormatter.FormatGeneric("AIINFO_WATER_CONSUMPTION", GetWaterConsumption() * 16) + Environment.NewLine + LocaleFormatter.FormatGeneric("AIINFO_ELECTRICITY_CONSUMPTION", GetElectricityConsumption() * 16);
-		    return TooltipHelper.Append(base.GetLocalizedTooltip(), TooltipHelper.Format(LocaleFormatter.Info1, text, LocaleFormatter.Info2, LocaleFormatter.FormatGeneric("AIINFO_VISITOR_CAPACITY", m_patientCapacity)));
+		    return LocaleFormatter.FormatGeneric("AIINFO_WATER_CONSUMPTION", GetWaterConsumption() * 16) + Environment.NewLine + LocaleFormatter.FormatGeneric("AIINFO_ELECTRICITY_CONSUMPTION", GetElectricityConsumption() * 16);
 	    }
 
         public override string GetLocalizedStats(ushort buildingID, ref Building data) {
             int numResidents;
             int numRoomsOccupied;
             getOccupancyDetails(ref data, out numResidents, out numRoomsOccupied);
-            GetVisitorCount(buildingID, ref data, out var count, out var capacity, out var global);
             // Get Worker Data
             Citizen.BehaviourData workerBehaviourData = new Citizen.BehaviourData();
             int aliveWorkerCount = 0;
@@ -247,11 +246,6 @@ namespace SeniorCitizenCenterMod {
             // Build Stats
             // TODO: Localize!!!
             StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.Append(string.Format("Visitors last week: {0} ", count));
-            stringBuilder.Append(Environment.NewLine);
-            stringBuilder.Append(string.Format("Eldercare users in the city: {0}", global));
-            stringBuilder.Append(Environment.NewLine);
-            stringBuilder.Append(Environment.NewLine);
             stringBuilder.Append(string.Format("Uneducated Workers: {0} of {1}", workerBehaviourData.m_educated0Count, numUneducatedWorkers));
             stringBuilder.Append(Environment.NewLine);
             stringBuilder.Append(string.Format("Educated Workers: {0} of {1}", workerBehaviourData.m_educated1Count, numEducatedWorkers));
