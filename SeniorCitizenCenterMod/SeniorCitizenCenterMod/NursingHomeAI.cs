@@ -121,6 +121,20 @@ namespace SeniorCitizenCenterMod {
             }
         }
 
+        public override void GetPlacementInfoMode(out InfoManager.InfoMode mode, out InfoManager.SubInfoMode subMode, float elevation)
+	    {
+		    mode = InfoManager.InfoMode.Health;
+		    subMode = InfoManager.SubInfoMode.PipeWater;
+	    }
+
+        public override void GetImmaterialResourceRadius(ushort buildingID, ref Building data, out ImmaterialResourceManager.Resource resource1, out float radius1, out ImmaterialResourceManager.Resource resource2, out float radius2)
+	    {
+		    resource1 = ImmaterialResourceManager.Resource.ElderCare;
+		    resource2 = ImmaterialResourceManager.Resource.None;
+		    radius1 = m_healthCareRadius;
+		    radius2 = 0f;
+	    }
+
         public override void CreateBuilding(ushort buildingID, ref Building data)
 	    {
             // Ensure quality is within bounds
@@ -191,6 +205,34 @@ namespace SeniorCitizenCenterMod {
                 Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.LoseHappiness, ImmaterialResourceManager.Resource.DeathCare, -QUALITY_VALUES[quality], operationRadius);
 		    }
         }
+
+        public override void PlacementSucceeded()
+	    {
+		    base.PlacementSucceeded();
+		    Singleton<BuildingManager>.instance.m_elderCareNotUsed?.Disable();
+	    }
+
+        public override void UpdateGuide(GuideController guideController)
+	    {
+		    Singleton<BuildingManager>.instance.m_elderCareNotUsed?.Activate(guideController.m_elderCareNotUsed, m_info);
+		    base.UpdateGuide(guideController);
+	    }
+
+        public override float GetCurrentRange(ushort buildingID, ref Building data)
+	    {
+		    int num = data.m_productionRate;
+		    if ((data.m_flags & (Building.Flags.Evacuating | Building.Flags.Active)) != Building.Flags.Active)
+		    {
+			    num = 0;
+		    }
+		    else if ((data.m_flags & Building.Flags.RateReduced) != 0)
+		    {
+			    num = Mathf.Min(num, 50);
+		    }
+		    int budget = Singleton<EconomyManager>.instance.GetBudget(m_info.m_class);
+		    num = PlayerBuildingAI.GetProductionRate(num, budget);
+		    return (float)num * m_healthCareRadius * 0.01f;
+	    }
 
         protected override void HandleWorkAndVisitPlaces(ushort buildingID, ref Building buildingData, ref Citizen.BehaviourData behaviour, ref int aliveWorkerCount, ref int totalWorkerCount, ref int workPlaceCount, ref int aliveVisitorCount, ref int totalVisitorCount, ref int visitPlaceCount) {
             workPlaceCount += numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
