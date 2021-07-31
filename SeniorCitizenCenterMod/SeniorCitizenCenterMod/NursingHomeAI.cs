@@ -4,11 +4,10 @@ using ColossalFramework;
 using ColossalFramework.Math;
 using UnityEngine;
 using System.Threading;
-using ColossalFramework.DataBinding;
 
 namespace SeniorCitizenCenterMod {
 
-    public class NursingHomeAI : EldercareAI {
+    public class NursingHomeAI : PlayerBuildingAI {
         private const bool LOG_PRODUCTION = false;
         private const bool LOG_SIMULATION = false;
 
@@ -37,6 +36,90 @@ namespace SeniorCitizenCenterMod {
 
         [CustomizableProperty("Quality (values: 1-5 including 1 and 5)")]
         public int quality = 3;
+
+        [CustomizableProperty("Healthcare Accumulation")]
+	    public int m_healthCareAccumulation = 100;
+
+	    [CustomizableProperty("Healthcare Radius")]
+	    public float m_healthCareRadius = 400f;
+
+        public int HealthCareAccumulation => UniqueFacultyAI.IncreaseByBonus(UniqueFacultyAI.FacultyBonus.Medicine, m_healthCareAccumulation);
+
+        public override Color GetColor(ushort buildingId, ref Building data, InfoManager.InfoMode infoMode) {
+            // This is a copy from ResidentialBuildingAI
+            InfoManager.InfoMode infoModeCopy = infoMode;
+            switch (infoModeCopy) {
+                case InfoManager.InfoMode.Health:
+                    if (Singleton<InfoManager>.instance.CurrentSubMode == InfoManager.SubInfoMode.PipeWater)
+			        {
+				        if ((data.m_flags & Building.Flags.Active) != 0)
+				        {
+					        return Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int)infoMode].m_activeColor;
+				        }
+				        return Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int)infoMode].m_inactiveColor;
+			        }
+			        return base.GetColor(buildingId, ref data, infoMode);
+                case InfoManager.InfoMode.Density:
+                    if (!this.ShowConsumption(buildingId, ref data) || (int) data.m_citizenCount == 0)
+                        return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
+                    int num1 = ((int) data.m_citizenCount - (int) data.m_youngs - (int) data.m_adults - (int) data.m_seniors) * 3;
+                    int num2 = (int) data.m_youngs + (int) data.m_adults;
+                    int num3 = (int) data.m_seniors;
+                    if (num1 == 0 && num2 == 0 && num3 == 0)
+                        return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
+                    if (num1 >= num2 && num1 >= num3)
+                        return Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int) infoMode].m_activeColor;
+                    if (num2 >= num3)
+                        return Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int) infoMode].m_activeColorB;
+                    return Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int) infoMode].m_negativeColor;
+                default:
+                    switch (infoModeCopy - 17) {
+                        case InfoManager.InfoMode.None:
+                            if (this.ShowConsumption(buildingId, ref data)) {
+                                return Color.Lerp(Singleton<InfoManager>.instance.m_properties.m_neutralColor, Color.Lerp(Singleton<ZoneManager>.instance.m_properties.m_zoneColors[2], Singleton<ZoneManager>.instance.m_properties.m_zoneColors[3], 0.5f) * 0.5f, (float) (0.200000002980232 + (double) Math.Max(0, this.quality - 1) * 0.200000002980232));
+                            }
+                            return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
+                        case InfoManager.InfoMode.Water:
+                            if (!this.ShowConsumption(buildingId, ref data) || (int) data.m_citizenCount == 0)
+                                return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
+                            InfoManager.SubInfoMode currentSubMode = Singleton<InfoManager>.instance.CurrentSubMode;
+                            int num4;
+                            int num5;
+                            if (currentSubMode == InfoManager.SubInfoMode.Default) {
+                                num4 = (int) data.m_education1 * 100;
+                                num5 = (int) data.m_teens + (int) data.m_youngs + (int) data.m_adults + (int) data.m_seniors;
+                            } else if (currentSubMode == InfoManager.SubInfoMode.WaterPower) {
+                                num4 = (int) data.m_education2 * 100;
+                                num5 = (int) data.m_youngs + (int) data.m_adults + (int) data.m_seniors;
+                            } else {
+                                num4 = (int) data.m_education3 * 100;
+                                num5 = (int) data.m_youngs * 2 / 3 + (int) data.m_adults + (int) data.m_seniors;
+                            }
+                            if (num5 != 0)
+                                num4 = (num4 + (num5 >> 1)) / num5;
+                            int num6 = Mathf.Clamp(num4, 0, 100);
+                            return Color.Lerp(Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int) infoMode].m_negativeColor, Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int) infoMode].m_targetColor, (float) num6 * 0.01f);
+                        default:
+                            return this.handleOtherColors(buildingId, ref data, infoMode);
+                    }
+            }
+        }
+
+        private Color handleOtherColors(ushort buildingId, ref Building data, InfoManager.InfoMode infoMode) {
+            switch (infoMode) {
+                case InfoManager.InfoMode.Happiness:
+                    if (ShowConsumption(buildingId, ref data)) {
+                        return Color.Lerp(Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int) infoMode].m_negativeColor, Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int) infoMode].m_targetColor, (float) Citizen.GetHappinessLevel((int) data.m_happiness) * 0.25f);
+                    }
+                    return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
+                case InfoManager.InfoMode.Garbage:
+                    if (m_garbageAccumulation == 0)
+                        return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
+                    return base.GetColor(buildingId, ref data, infoMode);
+                default:
+                    return base.GetColor(buildingId, ref data, infoMode);
+            }
+        }
 
         public override void CreateBuilding(ushort buildingID, ref Building data)
 	    {
@@ -79,7 +162,7 @@ namespace SeniorCitizenCenterMod {
 
         protected override void ManualActivation(ushort buildingID, ref Building buildingData) 
         {
-            int elderCareAccumulation = GetElderCareAccumulation();
+            int elderCareAccumulation = HealthCareAccumulation;
 		    if (elderCareAccumulation != 0)
 		    {
 			    Vector3 position = buildingData.m_position;
@@ -97,7 +180,7 @@ namespace SeniorCitizenCenterMod {
 			    Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.Happy, ImmaterialResourceManager.Resource.Abandonment, -buildingData.Width * buildingData.Length, 64f);
 			    return;
 		    }
-		    int elderCareAccumulation = GetElderCareAccumulation();
+		    int elderCareAccumulation = HealthCareAccumulation;
 		    if (elderCareAccumulation != 0)
 		    {
 			    Vector3 position = buildingData.m_position;
@@ -124,9 +207,16 @@ namespace SeniorCitizenCenterMod {
 			    int aliveCount = 0;
 			    int totalCount = 0;
                 int homeCount = 0;
+                int aliveWorkerCount = 0;
+	            int totalWorkerCount = 0;
                 int aliveHomeCount = 0;
                 int emptyHomeCount = 0;
+
                 GetHomeBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveCount, ref totalCount, ref homeCount, ref aliveHomeCount, ref emptyHomeCount);
+                GetWorkBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveWorkerCount, ref totalWorkerCount);
+                HandleSick(buildingID, ref buildingData, ref behaviour, totalWorkerCount + totalCount);
+                HandleDead(buildingID, ref buildingData, ref behaviour, totalWorkerCount + totalCount);
+
                 buildingData.m_customBuffer1 = (ushort)aliveCount;
                 int health = 0;
                 float radius = (float) (buildingData.Width + buildingData.Length) * 2.5f;
@@ -134,6 +224,7 @@ namespace SeniorCitizenCenterMod {
                     if (aliveCount != 0) {
                         health = (behaviour.m_healthAccumulation + (aliveCount >> 1)) / aliveCount;
                     }
+                    Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.ElderCare, behaviour.m_healthAccumulation, buildingData.m_position, radius);
                     Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Health, behaviour.m_healthAccumulation, buildingData.m_position, radius);
                 }
                 Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- health: {0}", health);
@@ -147,6 +238,10 @@ namespace SeniorCitizenCenterMod {
                     Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Wellbeing, behaviour.m_wellbeingAccumulation, buildingData.m_position, radius);
                 }
                 Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- wellbeing: {0}", wellbeing);
+
+                if (aliveCount != 0) {
+                    Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Density, aliveCount, buildingData.m_position, radius);
+                }
 
                 // Calculate Happiness
                 int happiness = Citizen.GetHappiness(health, wellbeing);
@@ -163,31 +258,7 @@ namespace SeniorCitizenCenterMod {
 	    }
 
         protected override void ProduceGoods(ushort buildingID, ref Building buildingData, ref Building.Frame frameData, int productionRate, int finalProductionRate, ref Citizen.BehaviourData behaviour, int aliveWorkerCount, int totalWorkerCount, int workPlaceCount, int aliveVisitorCount, int totalVisitorCount, int visitPlaceCount) {
-            if (finalProductionRate != 0)
-	        {
-		        buildingData.m_flags |= Building.Flags.Active;
-		        if (m_supportEvents != 0 || buildingData.m_eventIndex != 0)
-		        {
-			        CheckEvents(buildingID, ref buildingData);
-		        }
-	        }
-	        else
-	        {
-		        buildingData.m_flags &= ~Building.Flags.Active;
-	        }            
-		    int num = productionRate * GetElderCareAccumulation() / 100;
-		    if (num != 0)
-		    {
-                float radius = (float) (buildingData.Width + buildingData.Length);
-			    Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.ElderCare, num, buildingData.m_position, radius);
-		    }
-            int aliveCount = 0;
-			int totalCount = 0;
-            int homeCount = 0;
-            int aliveHomeCount = 0;
-            int emptyHomeCount = 0;
-            GetHomeBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveCount, ref totalCount, ref homeCount, ref aliveHomeCount, ref emptyHomeCount);
-		    HandleDead(buildingID, ref buildingData, ref behaviour, totalWorkerCount + totalCount);
+            base.ProduceGoods(buildingID, ref buildingData, ref frameData, productionRate, finalProductionRate, ref behaviour, aliveWorkerCount, totalWorkerCount, workPlaceCount, aliveVisitorCount, totalVisitorCount, visitPlaceCount);    
 
             // Make sure there are no problems
             if ((buildingData.m_problems & (Notification.Problem.MajorProblem | Notification.Problem.Electricity | Notification.Problem.ElectricityNotConnected | Notification.Problem.Fire | Notification.Problem.NoWorkers | Notification.Problem.Water | Notification.Problem.WaterNotConnected | Notification.Problem.RoadNotConnected | Notification.Problem.TurnedOff)) != Notification.Problem.None) {

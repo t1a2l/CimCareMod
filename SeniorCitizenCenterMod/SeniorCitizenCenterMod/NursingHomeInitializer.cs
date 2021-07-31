@@ -13,10 +13,13 @@ namespace SeniorCitizenCenterMod {
         public const int LOADED_LEVEL_GAME = 6;
         public const int LOADED_LEVEL_ASSET_EDITOR = 19;
 
+        private const String ELDER_CARE_NAME = "ElderCare 01";
+
         private static readonly Queue<IEnumerator> ACTION_QUEUE = new Queue<IEnumerator>();
         private static readonly object QUEUE_LOCK = new object();
 
         private int attemptingInitialization;
+        private int numTimesSearchedForElderCare = 0;
 
         private bool initialized;
         private int numAttempts = 0;
@@ -70,6 +73,12 @@ namespace SeniorCitizenCenterMod {
                 return;
             }
 
+            // Wait for the Medical Clinic or other HospitalAI Building to load since all new Nursing Homes will copy its values
+            BuildingInfo elderCareBuildingInfo = this.findElderCareBuildingInfo();
+            if (elderCareBuildingInfo == null) {
+                this.attemptingInitialization = 0;
+                return;
+            }
 
             // Start loading
             Logger.logInfo(LOG_INITIALIZER, "NursingHomeInitializer.attemptInitialization -- Attempting Initialization");
@@ -91,8 +100,35 @@ namespace SeniorCitizenCenterMod {
         private void SetInitialized() {
             this.initialized = true;
             this.attemptingInitialization = 0;
+            this.numTimesSearchedForElderCare = 0;
         }
+        
+        private BuildingInfo findElderCareBuildingInfo() 
+        {
+            // First check for the known Medical Clinic
+            BuildingInfo eldercareBuildingInfo = PrefabCollection<BuildingInfo>.FindLoaded(ELDER_CARE_NAME);
+            if (eldercareBuildingInfo != null) {
+                return eldercareBuildingInfo;
+            }
 
+            // Try 5 times to search for the Medical Clinic before giving up
+            if (++this.numTimesSearchedForElderCare < 5) {
+                return null;
+            }
+
+            // Attempt to find a suitable medical building that can be used as a template
+            Logger.logInfo(LOG_INITIALIZER, "NursingHomeInitializer.findMedicalBuildingInfo -- Couldn't find the Medical Clinic asset after {0} tries, attempting to search for any Building with a HospitalAi", this.numTimesSearchedForElderCare);
+            for (uint i=0; (long) PrefabCollection<BuildingInfo>.LoadedCount() > (long) i; ++i) {
+                BuildingInfo buildingInfo = PrefabCollection<BuildingInfo>.GetLoaded(i);
+                if (buildingInfo != null && buildingInfo.GetService() == ItemClass.Service.HealthCare && !buildingInfo.m_buildingAI.IsWonder() && buildingInfo.m_buildingAI is EldercareAI) {
+                    Logger.logInfo(LOG_INITIALIZER, "NursingHomeInitializer.findMedicalBuildingInfo -- Using the {0} as a template instead of the Medical Clinic", buildingInfo);
+                    return buildingInfo;
+                }
+            }
+
+            // Return null to try again next time
+            return null;
+        }
 
         private IEnumerator initNursingHomes() {
             Logger.logInfo(LOG_INITIALIZER, "NursingHomeInitializer.initNursingHomes");
