@@ -37,11 +37,7 @@ namespace SeniorCitizenCenterMod {
         [CustomizableProperty("Quality (values: 1-5 including 1 and 5)")]
         public int quality = 3;
 
-        [CustomizableProperty("Healthcare Accumulation")]
 	    public int m_healthCareAccumulation = 100;
-
-	    [CustomizableProperty("Healthcare Radius")]
-	    public float m_healthCareRadius = 400f;
 
         public int HealthCareAccumulation => UniqueFacultyAI.IncreaseByBonus(UniqueFacultyAI.FacultyBonus.Medicine, m_healthCareAccumulation);
 
@@ -60,18 +56,16 @@ namespace SeniorCitizenCenterMod {
 			        }
 			        return base.GetColor(buildingId, ref data, infoMode);
                 case InfoManager.InfoMode.Density:
-                    if (!this.ShowConsumption(buildingId, ref data) || (int) data.m_citizenCount == 0)
-                        return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
-                    int num1 = ((int) data.m_citizenCount - (int) data.m_youngs - (int) data.m_adults - (int) data.m_seniors) * 3;
-                    int num2 = (int) data.m_youngs + (int) data.m_adults;
-                    int num3 = (int) data.m_seniors;
-                    if (num1 == 0 && num2 == 0 && num3 == 0)
-                        return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
-                    if (num1 >= num2 && num1 >= num3)
-                        return Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int) infoMode].m_activeColor;
-                    if (num2 >= num3)
-                        return Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int) infoMode].m_activeColorB;
-                    return Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int) infoMode].m_negativeColor;
+                    if (ShowConsumption(buildingId, ref data) && data.m_citizenCount != 0)
+			        {
+				        int seniors = data.m_seniors;
+				        if (seniors == 0)
+				        {
+					        return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
+				        }
+				        return Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int)infoMode].m_negativeColor;
+			        }
+			        return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
                 default:
                     switch (infoModeCopy - 17) {
                         case InfoManager.InfoMode.None:
@@ -131,7 +125,7 @@ namespace SeniorCitizenCenterMod {
 	    {
 		    resource1 = ImmaterialResourceManager.Resource.ElderCare;
 		    resource2 = ImmaterialResourceManager.Resource.None;
-		    radius1 = m_healthCareRadius;
+		    radius1 = operationRadius;
 		    radius2 = 0f;
 	    }
 
@@ -181,9 +175,7 @@ namespace SeniorCitizenCenterMod {
 		    {
 			    Vector3 position = buildingData.m_position;
 			    position.y += m_info.m_size.y;
-			    Singleton<NotificationManager>.instance.AddEvent(NotificationEvent.Type.GainHealth, position, 1.5f);
                 Singleton<NotificationManager>.instance.AddEvent(NotificationEvent.Type.Happy, position, 1.5f);
-			    Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.Happy, ImmaterialResourceManager.Resource.ElderCare, elderCareAccumulation, m_healthCareRadius);
                 Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.GainHappiness, ImmaterialResourceManager.Resource.DeathCare, QUALITY_VALUES[quality], operationRadius);
             }
         }
@@ -199,9 +191,7 @@ namespace SeniorCitizenCenterMod {
 		    {
 			    Vector3 position = buildingData.m_position;
 			    position.y += m_info.m_size.y;
-			    Singleton<NotificationManager>.instance.AddEvent(NotificationEvent.Type.LoseHealth, position, 1.5f);
                 Singleton<NotificationManager>.instance.AddEvent(NotificationEvent.Type.Sad, position, 1.5f);
-			    Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.Sad, ImmaterialResourceManager.Resource.ElderCare, -elderCareAccumulation, m_healthCareRadius);
                 Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.LoseHappiness, ImmaterialResourceManager.Resource.DeathCare, -QUALITY_VALUES[quality], operationRadius);
 		    }
         }
@@ -231,7 +221,7 @@ namespace SeniorCitizenCenterMod {
 		    }
 		    int budget = Singleton<EconomyManager>.instance.GetBudget(m_info.m_class);
 		    num = PlayerBuildingAI.GetProductionRate(num, budget);
-		    return (float)num * m_healthCareRadius * 0.01f;
+		    return (float)num * operationRadius * 0.01f;
 	    }
 
         protected override void HandleWorkAndVisitPlaces(ushort buildingID, ref Building buildingData, ref Citizen.BehaviourData behaviour, ref int aliveWorkerCount, ref int totalWorkerCount, ref int workPlaceCount, ref int aliveVisitorCount, ref int totalVisitorCount, ref int visitPlaceCount) {
@@ -240,67 +230,174 @@ namespace SeniorCitizenCenterMod {
 		    HandleWorkPlaces(buildingID, ref buildingData, numUneducatedWorkers, numEducatedWorkers, numWellEducatedWorkers, numHighlyEducatedWorkers, ref behaviour, aliveWorkerCount, totalWorkerCount);
         }
 
-        public override void SimulationStep(ushort buildingID, ref Building buildingData, ref Building.Frame frameData)
+        public override void SimulationStep(ushort buildingID, ref Building buildingData, ref Building.Frame frameData) {
+            base.SimulationStep(buildingID, ref buildingData, ref frameData);
+        }
+
+        protected  override void SimulationStepActive(ushort buildingID, ref Building buildingData, ref Building.Frame frameData)
 	    {
-		    base.SimulationStep(buildingID, ref buildingData, ref frameData);
-		    if ((buildingData.m_flags & Building.Flags.Active) == 0)
-		    {
-			    Citizen.BehaviourData behaviour = default(Citizen.BehaviourData);
-			    int aliveCount = 0;
-			    int totalCount = 0;
-                int homeCount = 0;
-                int aliveWorkerCount = 0;
-	            int totalWorkerCount = 0;
-                int aliveHomeCount = 0;
-                int emptyHomeCount = 0;
+			Citizen.BehaviourData behaviour = default(Citizen.BehaviourData);
+			int aliveCount = 0;
+			int totalCount = 0;
+            int homeCount = 0;
+            int aliveWorkerCount = 0;
+	        int totalWorkerCount = 0;
+            int aliveHomeCount = 0;
+            int emptyHomeCount = 0;
 
-                GetHomeBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveCount, ref totalCount, ref homeCount, ref aliveHomeCount, ref emptyHomeCount);
-                GetWorkBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveWorkerCount, ref totalWorkerCount);
-                HandleSick(buildingID, ref buildingData, ref behaviour, totalWorkerCount + totalCount);
-                HandleDead(buildingID, ref buildingData, ref behaviour, totalWorkerCount + totalCount);
+            GetHomeBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveCount, ref totalCount, ref homeCount, ref aliveHomeCount, ref emptyHomeCount);
+            GetWorkBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveWorkerCount, ref totalWorkerCount);
 
-                buildingData.m_customBuffer1 = (ushort)aliveCount;
-                int health = 0;
-                float radius = (float) (buildingData.Width + buildingData.Length) * 2.5f;
-                if (behaviour.m_healthAccumulation != 0) {
-                    if (aliveCount != 0) {
-                        health = (behaviour.m_healthAccumulation + (aliveCount >> 1)) / aliveCount;
-                    }
-                    Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.ElderCare, behaviour.m_healthAccumulation, buildingData.m_position, radius);
-                    Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Health, behaviour.m_healthAccumulation, buildingData.m_position, radius);
+            DistrictManager districtManager = Singleton<DistrictManager>.instance;
+            byte district = districtManager.GetDistrict(buildingData.m_position);
+            DistrictPolicies.Services policies = districtManager.m_districts.m_buffer[(int) district].m_servicePolicies;
+
+            DistrictPolicies.Taxation taxationPolicies = districtManager.m_districts.m_buffer[(int) district].m_taxationPolicies;
+            DistrictPolicies.CityPlanning cityPlanning = districtManager.m_districts.m_buffer[(int) district].m_cityPlanningPolicies;
+            DistrictPolicies.Special special = districtManager.m_districts.m_buffer[(int) district].m_specialPolicies;
+
+            districtManager.m_districts.m_buffer[(int) district].m_servicePoliciesEffect |= policies & (DistrictPolicies.Services.PowerSaving | DistrictPolicies.Services.WaterSaving | DistrictPolicies.Services.SmokeDetectors | DistrictPolicies.Services.PetBan | DistrictPolicies.Services.Recycling | DistrictPolicies.Services.SmokingBan | DistrictPolicies.Services.ExtraInsulation | DistrictPolicies.Services.NoElectricity | DistrictPolicies.Services.OnlyElectricity);
+
+            int electricityConsumption;
+            int waterConsumption;
+            int sewageAccumulation;
+            int garbageAccumulation;
+            int incomeAccumulation;
+            this.GetConsumptionRates(new Randomizer((int) buildingID), 100, out electricityConsumption, out waterConsumption, out sewageAccumulation, out garbageAccumulation, out incomeAccumulation);
+
+            int modifiedElectricityConsumption = 1 + (electricityConsumption * behaviour.m_electricityConsumption + 9999) / 10000;
+            waterConsumption = 1 + (waterConsumption * behaviour.m_waterConsumption + 9999) / 10000;
+            int modifiedSewageAccumulation = 1 + (sewageAccumulation * behaviour.m_sewageAccumulation + 9999) / 10000;
+            garbageAccumulation = (garbageAccumulation * behaviour.m_garbageAccumulation + 9999) / 10000;
+            int modifiedIncomeAccumulation = 0;
+
+            // Handle Heating
+            int heatingConsumption = 0;
+            if (modifiedElectricityConsumption != 0 && districtManager.IsPolicyLoaded(DistrictPolicies.Policies.ExtraInsulation)) {
+                if ((policies & DistrictPolicies.Services.ExtraInsulation) != DistrictPolicies.Services.None) {
+                    heatingConsumption = Mathf.Max(1, modifiedElectricityConsumption * 3 + 8 >> 4);
+                } else
+                    heatingConsumption = Mathf.Max(1, modifiedElectricityConsumption + 2 >> 2);
+            }
+
+            // Handle Recylcing and Pets
+            if (garbageAccumulation != 0) {
+                if ((policies & DistrictPolicies.Services.Recycling) != DistrictPolicies.Services.None) {
+                    garbageAccumulation = (policies & DistrictPolicies.Services.PetBan) == DistrictPolicies.Services.None ? Mathf.Max(1, garbageAccumulation * 85 / 100) : Mathf.Max(1, garbageAccumulation * 7650 / 10000);
+                    modifiedIncomeAccumulation = modifiedIncomeAccumulation * 95 / 100;
+                } else if ((policies & DistrictPolicies.Services.PetBan) != DistrictPolicies.Services.None) {
+                    garbageAccumulation = Mathf.Max(1, garbageAccumulation * 90 / 100);
                 }
-                Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- health: {0}", health);
+            }
 
-                // Get the Wellbeing
-                int wellbeing = 0;
-                if (behaviour.m_wellbeingAccumulation != 0) {
-                    if (aliveCount != 0) {
-                        wellbeing = (behaviour.m_wellbeingAccumulation + (aliveCount >> 1)) / aliveCount;
-                    }
-                    Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Wellbeing, behaviour.m_wellbeingAccumulation, buildingData.m_position, radius);
-                }
-                Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- wellbeing: {0}", wellbeing);
+            if ((int) buildingData.m_fireIntensity == 0) {
+                int maxMail = 100;
+                int mailAccumulation = 1;
+                int commonConsumptionValue = this.HandleCommonConsumption(buildingID, ref buildingData, ref frameData, ref modifiedElectricityConsumption, ref heatingConsumption, ref waterConsumption, ref modifiedSewageAccumulation, ref garbageAccumulation, ref mailAccumulation, maxMail, policies);
+                buildingData.m_flags |= Building.Flags.Active;
+            } else {
+                // Handle on fire
+                modifiedElectricityConsumption = 0;
+                heatingConsumption = 0;
+                waterConsumption = 0;
+                modifiedSewageAccumulation = 0;
+                garbageAccumulation = 0;
+                buildingData.m_problems = Notification.RemoveProblems(buildingData.m_problems, Notification.Problem.Electricity | Notification.Problem.Water | Notification.Problem.Sewage | Notification.Problem.Flood | Notification.Problem.Heating);
+                buildingData.m_flags &= ~Building.Flags.Active;
+            }
 
+
+            buildingData.m_customBuffer1 = (ushort)aliveCount;
+            int health = 0;
+            float radius = (float) (buildingData.Width + buildingData.Length) * 2.5f;
+            if (behaviour.m_healthAccumulation != 0) {
                 if (aliveCount != 0) {
-                    Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Density, aliveCount, buildingData.m_position, radius);
+                    health = (behaviour.m_healthAccumulation + (aliveCount >> 1)) / aliveCount;
                 }
+                Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.ElderCare, behaviour.m_healthAccumulation, buildingData.m_position, radius);
+                Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Health, behaviour.m_healthAccumulation, buildingData.m_position, radius);
+            }
+            Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- health: {0}", health);
 
-                // Calculate Happiness
-                int happiness = Citizen.GetHappiness(health, wellbeing);
-                if ((buildingData.m_problems & Notification.Problem.MajorProblem) != Notification.Problem.None) {
-                    happiness -= happiness >> 1;
-                } else if (buildingData.m_problems != Notification.Problem.None) {
-                    happiness -= happiness >> 2;
+            // Get the Wellbeing
+            int wellbeing = 0;
+            if (behaviour.m_wellbeingAccumulation != 0) {
+                if (aliveCount != 0) {
+                    wellbeing = (behaviour.m_wellbeingAccumulation + (aliveCount >> 1)) / aliveCount;
                 }
-                Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- happiness: {0}", happiness);
+                Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Wellbeing, behaviour.m_wellbeingAccumulation, buildingData.m_position, radius);
+            }
+            Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- wellbeing: {0}", wellbeing);
 
-                // Handle custom maintenance in addition to the standard maintenance handled in the base class
-                handleAdditionalMaintenanceCost(ref buildingData);
-		    }
+            if (aliveCount != 0) {
+                Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Density, aliveCount, buildingData.m_position, radius);
+            }
+
+            // Calculate Happiness
+            int happiness = Citizen.GetHappiness(health, wellbeing);
+            if ((buildingData.m_problems & Notification.Problem.MajorProblem) != Notification.Problem.None) {
+                happiness -= happiness >> 1;
+            } else if (buildingData.m_problems != Notification.Problem.None) {
+                happiness -= happiness >> 2;
+            }
+            Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- happiness: {0}", happiness);
+
+            buildingData.m_health = (byte) health;
+            buildingData.m_happiness = (byte) happiness;
+            buildingData.m_citizenCount = (byte) aliveCount;
+            buildingData.m_education1 = (byte) behaviour.m_education1Count;
+            buildingData.m_education2 = (byte) behaviour.m_education2Count;
+            buildingData.m_education3 = (byte) behaviour.m_education3Count;
+            buildingData.m_teens = (byte) behaviour.m_teenCount;
+            buildingData.m_youngs = (byte) behaviour.m_youngCount;
+            buildingData.m_adults = (byte) behaviour.m_adultCount;
+            buildingData.m_seniors = (byte) behaviour.m_seniorCount;
+
+            HandleSick(buildingID, ref buildingData, ref behaviour, totalWorkerCount + totalCount);
+            HandleDead(buildingID, ref buildingData, ref behaviour, totalWorkerCount + totalCount);
+
+            // Handle Crime and Fire Factors
+            int crimeAccumulation = behaviour.m_crimeAccumulation / (3 * getModifiedCapacity());
+            if ((policies & DistrictPolicies.Services.RecreationalUse) != DistrictPolicies.Services.None) {
+                crimeAccumulation = crimeAccumulation * 3 + 3 >> 2;
+            }
+            this.HandleCrime(buildingID, ref buildingData, crimeAccumulation, aliveCount);
+            int crimeBuffer = (int) buildingData.m_crimeBuffer;
+            int crimeRate;
+            if (aliveCount != 0) {
+                Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Density, aliveCount, buildingData.m_position, radius);
+                // num1
+                int fireFactor = (behaviour.m_educated0Count * 30 + behaviour.m_educated1Count * 15 + behaviour.m_educated2Count * 10) / aliveCount + 50;
+                if ((int) buildingData.m_crimeBuffer > aliveCount * 40) {
+                    fireFactor += 30;
+                } else if ((int) buildingData.m_crimeBuffer > aliveCount * 15) {
+                    fireFactor += 15;
+                } else if ((int) buildingData.m_crimeBuffer > aliveCount * 5) {
+                    fireFactor += 10;
+                }
+                buildingData.m_fireHazard = (byte) fireFactor;
+                crimeRate = (crimeBuffer + (aliveCount >> 1)) / aliveCount;
+            } else {
+                buildingData.m_fireHazard = (byte) 0;
+                crimeRate = 0;
+            }
+
+            // Handle custom maintenance in addition to the standard maintenance handled in the base class
+            handleAdditionalMaintenanceCost(ref buildingData);
+		    
+            base.SimulationStepActive(buildingID, ref buildingData, ref frameData);
+            HandleFire(buildingID, ref buildingData, ref frameData, policies);
 	    }
 
         protected override void ProduceGoods(ushort buildingID, ref Building buildingData, ref Building.Frame frameData, int productionRate, int finalProductionRate, ref Citizen.BehaviourData behaviour, int aliveWorkerCount, int totalWorkerCount, int workPlaceCount, int aliveVisitorCount, int totalVisitorCount, int visitPlaceCount) {
             base.ProduceGoods(buildingID, ref buildingData, ref frameData, productionRate, finalProductionRate, ref behaviour, aliveWorkerCount, totalWorkerCount, workPlaceCount, aliveVisitorCount, totalVisitorCount, visitPlaceCount);    
+            if (finalProductionRate == 0)
+		    {
+			    return;
+		    }
+            int numResidents;
+            int numRoomsOccupied;
+            getOccupancyDetails(ref buildingData, out numResidents, out numRoomsOccupied);
 
             // Make sure there are no problems
             if ((buildingData.m_problems & (Notification.Problem.MajorProblem | Notification.Problem.Electricity | Notification.Problem.ElectricityNotConnected | Notification.Problem.Fire | Notification.Problem.NoWorkers | Notification.Problem.Water | Notification.Problem.WaterNotConnected | Notification.Problem.RoadNotConnected | Notification.Problem.TurnedOff)) != Notification.Problem.None) {

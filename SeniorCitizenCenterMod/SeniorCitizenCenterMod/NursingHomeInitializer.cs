@@ -13,7 +13,7 @@ namespace SeniorCitizenCenterMod {
         public const int LOADED_LEVEL_GAME = 6;
         public const int LOADED_LEVEL_ASSET_EDITOR = 19;
 
-        private const String ELDER_CARE_NAME = "ElderCare 01";
+        private const String ELDER_CARE_NAME = "Eldercare 01";
 
         private static readonly Queue<IEnumerator> ACTION_QUEUE = new Queue<IEnumerator>();
         private static readonly object QUEUE_LOCK = new object();
@@ -117,11 +117,11 @@ namespace SeniorCitizenCenterMod {
             }
 
             // Attempt to find a suitable medical building that can be used as a template
-            Logger.logInfo(LOG_INITIALIZER, "NursingHomeInitializer.findMedicalBuildingInfo -- Couldn't find the Medical Clinic asset after {0} tries, attempting to search for any Building with a HospitalAi", this.numTimesSearchedForElderCare);
+            Logger.logInfo(LOG_INITIALIZER, "NursingHomeInitializer.findMedicalBuildingInfo -- Couldn't find the Elder Care asset after {0} tries, attempting to search for any Building with a ElderCareAI", this.numTimesSearchedForElderCare);
             for (uint i=0; (long) PrefabCollection<BuildingInfo>.LoadedCount() > (long) i; ++i) {
                 BuildingInfo buildingInfo = PrefabCollection<BuildingInfo>.GetLoaded(i);
                 if (buildingInfo != null && buildingInfo.GetService() == ItemClass.Service.HealthCare && !buildingInfo.m_buildingAI.IsWonder() && buildingInfo.m_buildingAI is EldercareAI) {
-                    Logger.logInfo(LOG_INITIALIZER, "NursingHomeInitializer.findMedicalBuildingInfo -- Using the {0} as a template instead of the Medical Clinic", buildingInfo);
+                    Logger.logInfo(LOG_INITIALIZER, "NursingHomeInitializer.findMedicalBuildingInfo -- Using the {0} as a template instead of the Elder Care", buildingInfo);
                     return buildingInfo;
                 }
             }
@@ -135,6 +135,7 @@ namespace SeniorCitizenCenterMod {
             float capcityModifier = SeniorCitizenCenterMod.getInstance().getOptionsManager().getCapacityModifier();
             uint index = 0U;
             int i = 0;
+            BuildingInfo elderCareBuildingInfo = this.findElderCareBuildingInfo();
             while (!Singleton<LoadingManager>.instance.m_loadingComplete || i++ < 2) {
                 Logger.logInfo(LOG_INITIALIZER, "NursingHomeInitializer.initNursingHomes -- Iteration: {0}", i);
                 for (; PrefabCollection<BuildingInfo>.LoadedCount() > index; ++index) {
@@ -145,10 +146,12 @@ namespace SeniorCitizenCenterMod {
                     {
                         if(buildingInfo.GetAI() is NursingHomeAI)
                         {
+                            buildingInfo.m_class = elderCareBuildingInfo.m_class;
                             AiReplacementHelper.ApplyNewAIToBuilding(buildingInfo);
                         }
                         else if(buildingInfo.name.EndsWith("_Data") && buildingInfo.name.Contains("NH123"))
                         {
+                            buildingInfo.m_class = elderCareBuildingInfo.m_class;
                             AiReplacementHelper.ApplyNewAIToBuilding(buildingInfo);
                         }
                         
