@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using SeniorCitizenCenterMod.AI;
 
-namespace SeniorCitizenCenterMod {
+namespace SeniorCitizenCenterMod.Utils {
     public static class AiReplacementHelper {
 
         public static void ApplyNewAIToBuilding(BuildingInfo b) {

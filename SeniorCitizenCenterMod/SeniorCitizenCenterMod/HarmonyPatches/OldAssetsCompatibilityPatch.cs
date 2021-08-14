@@ -1,10 +1,9 @@
-﻿using System;
-using HarmonyLib;
+﻿using HarmonyLib;
 
-namespace SeniorCitizenCenterMod
+namespace SeniorCitizenCenterMod.HarmonyPatches
 {
     [HarmonyPatch(typeof(PackageHelper), "ResolveLegacyTypeHandler")]
-    static class OldAssetsCompatibility
+    static class OldAssetsCompatibilityPatch
     {
         // 'SeniorCitizenCenterMod.NursingHomeAi, SeniorCitizenCenterMod, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null'
         [HarmonyPostfix]

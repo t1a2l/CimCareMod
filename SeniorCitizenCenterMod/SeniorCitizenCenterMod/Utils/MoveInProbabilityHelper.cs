@@ -3,7 +3,7 @@ using ColossalFramework;
 using ColossalFramework.Math;
 using UnityEngine;
 
-namespace SeniorCitizenCenterMod {
+namespace SeniorCitizenCenterMod.Utils {
     public class MoveInProbabilityHelper {
         private static readonly bool LOG_CHANCES = false;
 

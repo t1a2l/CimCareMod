@@ -5,8 +5,9 @@ using System.Reflection;
 using System.Threading;
 using ColossalFramework;
 using UnityEngine;
+using SeniorCitizenCenterMod.AI;
 
-namespace SeniorCitizenCenterMod {
+namespace SeniorCitizenCenterMod.Utils {
     public class NursingHomeInitializer : MonoBehaviour {
         private const bool LOG_INITIALIZER = true;
 

@@ -4,8 +4,9 @@ using ColossalFramework;
 using ColossalFramework.Math;
 using UnityEngine;
 using System.Threading;
+using SeniorCitizenCenterMod.Utils;
 
-namespace SeniorCitizenCenterMod {
+namespace SeniorCitizenCenterMod.AI {
 
     public class NursingHomeAI : PlayerBuildingAI {
         private const bool LOG_PRODUCTION = false;

@@ -4,8 +4,9 @@ using System.IO;
 using System.Xml.Serialization;
 using System;
 using ColossalFramework;
+using SeniorCitizenCenterMod.AI;
 
-namespace SeniorCitizenCenterMod {
+namespace SeniorCitizenCenterMod.Utils {
     public class OptionsManager {
 
         private static readonly string[] CAPACITY_LABELS = new string[] { "Give Em Room (x0.5)", "Realistic (x1.0)", "Just a bit More (x1.5)", "Gameplay over Realism (x2.0)", "Who needs Living Space? (x2.5)", "Pack em like Sardines! (x3.0)" };

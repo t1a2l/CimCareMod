@@ -5,7 +5,7 @@ using ColossalFramework;
 using ColossalFramework.Math;
 using ICities;
 
-namespace SeniorCitizenCenterMod {
+namespace SeniorCitizenCenterMod.Utils {
     public class SeniorCitizenManager : ThreadingExtensionBase {
         private const bool LOG_SENIORS = false;
 

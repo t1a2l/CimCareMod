@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Runtime.Serialization;
+using SeniorCitizenCenterMod.AI;
 
-namespace SeniorCitizenCenterMod
+namespace SeniorCitizenCenterMod.Utils
 {
     public class BackwardСompatibilityBinder : SerializationBinder
     {

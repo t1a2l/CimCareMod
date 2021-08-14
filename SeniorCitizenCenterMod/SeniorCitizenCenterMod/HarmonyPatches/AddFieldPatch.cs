@@ -1,8 +1,9 @@
 ﻿using System;
 using ColossalFramework.UI;
 using HarmonyLib;
+using SeniorCitizenCenterMod.AI;
 
-namespace SeniorCitizenCenterMod
+namespace SeniorCitizenCenterMod.HarmonyPatches
 {
     [HarmonyPatch(typeof(DecorationPropertiesPanel))]
     public class AddFieldPatch
