@@ -12,9 +12,9 @@ namespace SeniorCitizenCenterMod.HarmonyPatches
             string[] temp = __result.Split(',');
             if(temp[1] == " SeniorCitizenCenterMod")
             {
-                if(temp[0] == "SeniorCitizenCenterMod.NursingHomeAi")
+                if(temp[0] == "SeniorCitizenCenterMod.NursingHomeAi" || temp[0] == "SeniorCitizenCenterMod.NursingHomeAI")
                 {
-                    __result = "SeniorCitizenCenterMod.NursingHomeAI, SeniorCitizenCenterMod, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null";
+                    __result = "SeniorCitizenCenterMod.AI.NursingHomeAI, SeniorCitizenCenterMod, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null";
                 }
             }
 		    Logger.logInfo(__result);
