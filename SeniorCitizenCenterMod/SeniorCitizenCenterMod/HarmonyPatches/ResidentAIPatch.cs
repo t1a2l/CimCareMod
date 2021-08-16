@@ -5,10 +5,12 @@ using SeniorCitizenCenterMod.AI;
 
 namespace SeniorCitizenCenterMod.HarmonyPatches
 {
-    [HarmonyPatch(typeof(ResidentAI), "FindHospital")]
+    [HarmonyPatch(typeof(ResidentAI))]
     public static class ResidentAIPatch
-    {
-		private static bool FindHospital(uint citizenID, ushort sourceBuilding, TransferManager.TransferReason reason, ref bool __result)
+    {  
+		[HarmonyPatch(typeof(ResidentAI), "FindHospital")]
+		[HarmonyPrefix]
+		public static bool FindHospital(uint citizenID, ushort sourceBuilding, TransferManager.TransferReason reason, ref bool __result)
 		{
 			if (reason == TransferManager.TransferReason.Dead)
 			{
