@@ -13,9 +13,12 @@ namespace SeniorCitizenCenterMod.HarmonyPatches
 		{
 			Citizen citizen = Singleton<CitizenManager>.instance.m_citizens.m_buffer[citizenID];
 			BuildingInfo homeBuildingInfo = Singleton<BuildingManager>.instance.m_buildings.m_buffer[citizen.m_homeBuilding].Info;
-			if(reason == TransferManager.TransferReason.ElderCare && IsSenior(citizenID) && homeBuildingInfo.GetAI() is NursingHomeAI)
+			if(reason == TransferManager.TransferReason.ElderCare)
             {
-				return false;
+				if(IsSenior(citizenID) && homeBuildingInfo.GetAI() is NursingHomeAI)
+                {
+					return false;
+                }
             }
 			TransferManager.TransferOffer offer = default(TransferManager.TransferOffer);
 			offer.Priority = Singleton<SimulationManager>.instance.m_randomizer.Int32(8u);

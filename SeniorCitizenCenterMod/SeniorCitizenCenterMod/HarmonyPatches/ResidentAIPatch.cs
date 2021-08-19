@@ -51,10 +51,13 @@ namespace SeniorCitizenCenterMod.HarmonyPatches
 								reason = TransferManager.TransferReason.ChildCare;
 								flag = true;
 							}
-							else if (IsSenior(citizenID) && info.m_class.m_level == ItemClass.Level.Level5 && !(homeBuildingInfo.GetAI() is NursingHomeAI))
+							else if (IsSenior(citizenID) && info.m_class.m_level == ItemClass.Level.Level5)
 							{
-								reason = TransferManager.TransferReason.ElderCare;
-								flag = true;
+								if(!(homeBuildingInfo.GetAI() is NursingHomeAI))
+                                {
+									reason = TransferManager.TransferReason.ElderCare;
+									flag = true;
+                                }
 							}
 						}
 					}
