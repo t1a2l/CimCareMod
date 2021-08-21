@@ -383,6 +383,8 @@ namespace SeniorCitizenCenterMod.AI {
                 crimeRate = 0;
             }
 
+            districtManager.m_districts.m_buffer[(int) district].AddResidentialData(ref behaviour, aliveCount, health, happiness, crimeRate, homeCount, aliveHomeCount, emptyHomeCount, (int) this.m_info.m_class.m_level, modifiedElectricityConsumption, heatingConsumption, waterConsumption, modifiedSewageAccumulation, garbageAccumulation, modifiedIncomeAccumulation, Mathf.Min(100, (int) buildingData.m_garbageBuffer / 50), (int) buildingData.m_waterPollution * 100 / (int) byte.MaxValue, this.m_info.m_class.m_subService);
+
             // Handle custom maintenance in addition to the standard maintenance handled in the base class
             handleAdditionalMaintenanceCost(ref buildingData);
 		    
