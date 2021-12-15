@@ -576,6 +576,7 @@ namespace SeniorCitizenCenterMod.AI {
         private int GetAverageResidentRequirement(ushort buildingID, ref Building data, ImmaterialResourceManager.Resource resource) {
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
             uint citizenUnit = data.m_citizenUnits;
+            uint numCitizenUnits = citizenManager.m_units.m_size;
             int counter = 0;
             int requirement1 = 0;
             int requirement2 = 0;
@@ -600,7 +601,7 @@ namespace SeniorCitizenCenterMod.AI {
                     }
                 }
                 citizenUnit = num5;
-                if (++counter > 524288) {
+                if (++counter > numCitizenUnits) {
                     CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + System.Environment.StackTrace);
                     break;
                 }
@@ -775,6 +776,7 @@ namespace SeniorCitizenCenterMod.AI {
         private void getOccupancyDetails(ref Building data, out int numResidents, out int numRoomsOccupied) {
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
             uint citizenUnitIndex = data.m_citizenUnits;
+            uint numCitizenUnits = citizenManager.m_units.m_size;
             numResidents = 0;
             numRoomsOccupied = 0;
             int counter = 0;
@@ -796,7 +798,7 @@ namespace SeniorCitizenCenterMod.AI {
                     }
                 }
                 citizenUnitIndex = nextCitizenUnitIndex;
-                if (++counter > 524288) {
+                if (++counter > numCitizenUnits) {
                     CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
                     break;
                 }
