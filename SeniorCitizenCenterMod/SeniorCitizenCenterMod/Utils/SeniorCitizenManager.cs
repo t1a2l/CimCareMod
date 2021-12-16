@@ -33,8 +33,10 @@ namespace SeniorCitizenCenterMod.Utils {
             this.citizenManager = Singleton<CitizenManager>.instance;
             this.buildingManager = Singleton<BuildingManager>.instance;
 
+            uint numCitizenUnits = this.citizenManager.m_units.m_size;
+
             // TODO: This array size is excessive but will allow for never worrying about resizing, should consider allowing for resizing instead
-            this.familiesWithSeniors = new uint[CitizenManager.MAX_UNIT_COUNT];
+            this.familiesWithSeniors = new uint[numCitizenUnits];
 
             this.seniorCitizensBeingProcessed = new HashSet<uint>();
         }
