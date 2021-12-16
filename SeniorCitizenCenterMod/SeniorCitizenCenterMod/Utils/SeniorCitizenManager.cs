@@ -4,6 +4,7 @@ using System.Threading;
 using ColossalFramework;
 using ColossalFramework.Math;
 using ICities;
+using SeniorCitizenCenterMod.AI;
 
 namespace SeniorCitizenCenterMod.Utils {
     public class SeniorCitizenManager : ThreadingExtensionBase {
@@ -194,7 +195,7 @@ namespace SeniorCitizenCenterMod.Utils {
             }
 
             // Validate not already living in a nursing home
-            if (this.buildingManager.m_buildings.m_buffer[homeBuildingId].Info.m_buildingAI is EldercareAI) {
+            if (this.buildingManager.m_buildings.m_buffer[homeBuildingId].Info.m_buildingAI is NursingHomeAI) {
                 return false;
             }
 
