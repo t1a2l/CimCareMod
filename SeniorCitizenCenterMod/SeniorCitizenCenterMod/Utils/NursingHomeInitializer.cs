@@ -74,7 +74,7 @@ namespace SeniorCitizenCenterMod.Utils {
                 return;
             }
 
-            // Wait for the Medical Clinic or other HospitalAI Building to load since all new Nursing Homes will copy its values
+            // Wait for the Eldercare Facility or other EldercareAI Building to load since all new Nursing Homes will copy its values
             BuildingInfo elderCareBuildingInfo = this.findElderCareBuildingInfo();
             if (elderCareBuildingInfo == null) {
                 this.attemptingInitialization = 0;
@@ -106,18 +106,18 @@ namespace SeniorCitizenCenterMod.Utils {
         
         private BuildingInfo findElderCareBuildingInfo() 
         {
-            // First check for the known Medical Clinic
+            // First check for the known Eldercare Facility
             BuildingInfo eldercareBuildingInfo = PrefabCollection<BuildingInfo>.FindLoaded(ELDER_CARE_NAME);
             if (eldercareBuildingInfo != null) {
                 return eldercareBuildingInfo;
             }
 
-            // Try 5 times to search for the Medical Clinic before giving up
+            // Try 5 times to search for the Eldercare Facility before giving up
             if (++this.numTimesSearchedForElderCare < 5) {
                 return null;
             }
 
-            // Attempt to find a suitable medical building that can be used as a template
+            // Attempt to find a suitable Eldercare building that can be used as a template
             Logger.logInfo(LOG_INITIALIZER, "NursingHomeInitializer.findMedicalBuildingInfo -- Couldn't find the Elder Care asset after {0} tries, attempting to search for any Building with a ElderCareAI", this.numTimesSearchedForElderCare);
             for (uint i=0; (long) PrefabCollection<BuildingInfo>.LoadedCount() > (long) i; ++i) {
                 BuildingInfo buildingInfo = PrefabCollection<BuildingInfo>.GetLoaded(i);
@@ -143,22 +143,15 @@ namespace SeniorCitizenCenterMod.Utils {
                     BuildingInfo buildingInfo = PrefabCollection<BuildingInfo>.GetLoaded(index);
 
                     // Check for replacement of AI
-                    if (buildingInfo != null)
+                    if (buildingInfo != null && buildingInfo.name.EndsWith("_Data") && buildingInfo.name.Contains("NH123"))
                     {
-                        if(buildingInfo.GetAI() is NursingHomeAI)
-                        {
-                            buildingInfo.m_class = elderCareBuildingInfo.m_class;
-                            AiReplacementHelper.ApplyNewAIToBuilding(buildingInfo);
-                        }
-                        else if(buildingInfo.name.EndsWith("_Data") && buildingInfo.name.Contains("NH123"))
-                        {
-                            buildingInfo.m_class = elderCareBuildingInfo.m_class;
-                            AiReplacementHelper.ApplyNewAIToBuilding(buildingInfo);
-                        }
-                        
+                        buildingInfo.m_class = elderCareBuildingInfo.m_class;
+                        AiReplacementHelper.ApplyNewAIToBuilding(buildingInfo);
                     }
+
                     // Check for updating capacity - Existing NHs will be updated on-load, this will set the data used for placing new homes
-                    if (this.loadedLevel == LOADED_LEVEL_GAME && buildingInfo != null && buildingInfo.m_buildingAI is NursingHomeAI nursingHomeAI) {
+                    if (this.loadedLevel == LOADED_LEVEL_GAME && buildingInfo != null && buildingInfo.m_buildingAI is NursingHomeAI nursingHomeAI) 
+                    {
                         nursingHomeAI.updateCapacity(capcityModifier);  
                     }
                 }
