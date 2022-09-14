@@ -303,7 +303,7 @@ namespace SeniorCitizenCenterMod.AI {
                 waterConsumption = 0;
                 modifiedSewageAccumulation = 0;
                 garbageAccumulation = 0;
-                buildingData.m_problems = Notification.RemoveProblems(buildingData.m_problems, Notification.Problem.Electricity | Notification.Problem.Water | Notification.Problem.Sewage | Notification.Problem.Flood | Notification.Problem.Heating);
+                buildingData.m_problems = Notification.RemoveProblems(buildingData.m_problems, Notification.Problem1.Electricity | Notification.Problem1.Water | Notification.Problem1.Sewage | Notification.Problem1.Flood | Notification.Problem1.Heating);
                 buildingData.m_flags &= ~Building.Flags.Active;
             }
 
@@ -336,9 +336,9 @@ namespace SeniorCitizenCenterMod.AI {
 
             // Calculate Happiness
             int happiness = Citizen.GetHappiness(health, wellbeing);
-            if ((buildingData.m_problems & Notification.Problem.MajorProblem) != Notification.Problem.None) {
+            if ((buildingData.m_problems & Notification.Problem1.MajorProblem) != Notification.Problem1.None) {
                 happiness -= happiness >> 1;
-            } else if (buildingData.m_problems != Notification.Problem.None) {
+            } else if (buildingData.m_problems != Notification.Problem1.None) {
                 happiness -= happiness >> 2;
             }
             Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- happiness: {0}", happiness);
@@ -403,7 +403,7 @@ namespace SeniorCitizenCenterMod.AI {
             getOccupancyDetails(ref buildingData, out numResidents, out numRoomsOccupied);
 
             // Make sure there are no problems
-            if ((buildingData.m_problems & (Notification.Problem.MajorProblem | Notification.Problem.Electricity | Notification.Problem.ElectricityNotConnected | Notification.Problem.Fire | Notification.Problem.NoWorkers | Notification.Problem.Water | Notification.Problem.WaterNotConnected | Notification.Problem.RoadNotConnected | Notification.Problem.TurnedOff)) != Notification.Problem.None) {
+            if ((buildingData.m_problems & (Notification.Problem1.MajorProblem | Notification.Problem1.Electricity | Notification.Problem1.ElectricityNotConnected | Notification.Problem1.Fire | Notification.Problem1.NoWorkers | Notification.Problem1.Water | Notification.Problem1.WaterNotConnected | Notification.Problem1.RoadNotConnected | Notification.Problem1.TurnedOff)) != Notification.Problem1.None) {
                 return;
             }
 
