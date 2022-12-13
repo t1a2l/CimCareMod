@@ -42,7 +42,7 @@ namespace SeniorCitizenCenterMod.AI {
 
         public int HealthCareAccumulation => UniqueFacultyAI.IncreaseByBonus(UniqueFacultyAI.FacultyBonus.Medicine, m_healthCareAccumulation);
 
-        public override Color GetColor(ushort buildingId, ref Building data, InfoManager.InfoMode infoMode) {
+        public override Color GetColor(ushort buildingId, ref Building data, InfoManager.InfoMode infoMode, InfoManager.SubInfoMode subInfoMode) {
             // This is a copy from ResidentialBuildingAI
             InfoManager.InfoMode infoModeCopy = infoMode;
             switch (infoModeCopy) {
@@ -55,7 +55,7 @@ namespace SeniorCitizenCenterMod.AI {
 				        }
 				        return Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int)infoMode].m_inactiveColor;
 			        }
-			        return base.GetColor(buildingId, ref data, infoMode);
+			        return base.GetColor(buildingId, ref data, infoMode, subInfoMode);
                 case InfoManager.InfoMode.Density:
                     if (ShowConsumption(buildingId, ref data) && data.m_citizenCount != 0)
 			        {
@@ -95,12 +95,12 @@ namespace SeniorCitizenCenterMod.AI {
                             int num6 = Mathf.Clamp(num4, 0, 100);
                             return Color.Lerp(Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int) infoMode].m_negativeColor, Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int) infoMode].m_targetColor, (float) num6 * 0.01f);
                         default:
-                            return this.handleOtherColors(buildingId, ref data, infoMode);
+                            return this.handleOtherColors(buildingId, ref data, infoMode, subInfoMode);
                     }
             }
         }
 
-        private Color handleOtherColors(ushort buildingId, ref Building data, InfoManager.InfoMode infoMode) {
+        private Color handleOtherColors(ushort buildingId, ref Building data, InfoManager.InfoMode infoMode, InfoManager.SubInfoMode subInfoMode) {
             switch (infoMode) {
                 case InfoManager.InfoMode.Happiness:
                     if (ShowConsumption(buildingId, ref data)) {
@@ -110,9 +110,9 @@ namespace SeniorCitizenCenterMod.AI {
                 case InfoManager.InfoMode.Garbage:
                     if (m_garbageAccumulation == 0)
                         return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
-                    return base.GetColor(buildingId, ref data, infoMode);
+                    return base.GetColor(buildingId, ref data, infoMode, subInfoMode);
                 default:
-                    return base.GetColor(buildingId, ref data, infoMode);
+                    return base.GetColor(buildingId, ref data, infoMode, subInfoMode);
             }
         }
 
@@ -122,12 +122,16 @@ namespace SeniorCitizenCenterMod.AI {
 		    subMode = InfoManager.SubInfoMode.PipeWater;
 	    }
 
-        public override void GetImmaterialResourceRadius(ushort buildingID, ref Building data, out ImmaterialResourceManager.Resource resource1, out float radius1, out ImmaterialResourceManager.Resource resource2, out float radius2)
+        public override ImmaterialResourceManager.ResourceData[] GetImmaterialResourceRadius(ushort buildingID, ref Building data)
 	    {
-		    resource1 = ImmaterialResourceManager.Resource.ElderCare;
-		    resource2 = ImmaterialResourceManager.Resource.None;
-		    radius1 = operationRadius;
-		    radius2 = 0f;
+		    return new ImmaterialResourceManager.ResourceData[1]
+		    {
+			    new ImmaterialResourceManager.ResourceData
+			    {
+				    m_resource = ImmaterialResourceManager.Resource.ElderCare,
+				    m_radius = operationRadius
+			    }
+		    };
 	    }
 
         public override void CreateBuilding(ushort buildingID, ref Building data)
