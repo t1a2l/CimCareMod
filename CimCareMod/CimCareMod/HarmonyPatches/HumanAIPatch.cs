@@ -1,8 +1,8 @@
 ﻿using ColossalFramework;
 using HarmonyLib;
-using SeniorCitizenCenterMod.AI;
+using CimCareMod.AI;
 
-namespace SeniorCitizenCenterMod.HarmonyPatches
+namespace CimCareMod.HarmonyPatches
 {
     [HarmonyPatch(typeof(HumanAI))]
     public static class HumanAIPatch
@@ -20,6 +20,13 @@ namespace SeniorCitizenCenterMod.HarmonyPatches
 					return false;
                 }
             }
+			else if(reason == TransferManager.TransferReason.ChildCare)
+            {
+				if(IsChild(citizenID) && homeBuildingInfo.GetAI() is OrphanageAI)
+                {
+					return false;
+                }
+            }
 			TransferManager.TransferOffer offer = default(TransferManager.TransferOffer);
 			offer.Priority = Singleton<SimulationManager>.instance.m_randomizer.Int32(8u);
 			offer.Citizen = citizenID;
@@ -33,6 +40,11 @@ namespace SeniorCitizenCenterMod.HarmonyPatches
 		private static bool IsSenior(uint citizenID)
 		{
 			return Citizen.GetAgeGroup(Singleton<CitizenManager>.instance.m_citizens.m_buffer[citizenID].Age) == Citizen.AgeGroup.Senior;
+		}
+
+		private static bool IsChild(uint citizenID)
+		{
+			return Citizen.GetAgeGroup(Singleton<CitizenManager>.instance.m_citizens.m_buffer[citizenID].Age) == Citizen.AgeGroup.Child || Citizen.GetAgeGroup(Singleton<CitizenManager>.instance.m_citizens.m_buffer[citizenID].Age) == Citizen.AgeGroup.Teen;
 		}
     }
 }

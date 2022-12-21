@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Runtime.Serialization;
-using SeniorCitizenCenterMod.AI;
+using CimCareMod.AI;
 
-namespace SeniorCitizenCenterMod.Utils
+namespace CimCareMod.Utils
 {
     public class BackwardСompatibilityBinder : SerializationBinder
     {
         public override Type BindToType(string assemblyName, string typeName)
         {
-            if (assemblyName == "SeniorCitizenCenterMod")
+            if (assemblyName == "CimCareMod")
             {
                 switch (typeName)
                 {

@@ -1,6 +1,6 @@
 ﻿using HarmonyLib;
 
-namespace SeniorCitizenCenterMod.HarmonyPatches
+namespace CimCareMod.HarmonyPatches
 {
     [HarmonyPatch(typeof(PackageHelper), "ResolveLegacyTypeHandler")]
     static class OldAssetsCompatibilityPatch

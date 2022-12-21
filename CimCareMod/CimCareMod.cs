@@ -1,23 +1,29 @@
 ﻿using ICities;
 using CitiesHarmony.API;
 using UnityEngine;
-using SeniorCitizenCenterMod.Utils;
+using CimCareMod.Utils;
+using CimCareMod.NursingHomeManagers;
+using CimCareMod.OrphanageManagers;
 
-namespace SeniorCitizenCenterMod
+namespace CimCareMod
 {
-    public class SeniorCitizenCenterMod : LoadingExtensionBase, IUserMod, ISerializableData  {
+    public class CimCareMod : LoadingExtensionBase, IUserMod, ISerializableData  {
         private const bool LOG_BASE = true;
 
         private GameObject nursingHomeInitializerObj;
+        private GameObject orphanageInitializerObj;
+
         private NursingHomeInitializer nursingHomeInitializer;
+        private OrphanageInitializer orphanageInitializer;
+
         private OptionsManager optionsManager = new OptionsManager();
 
         public new IManagers managers { get; }
 
-        private static SeniorCitizenCenterMod instance;
-        string IUserMod.Name => "Senior Citizen Center Mod";
+        private static CimCareMod instance;
+        string IUserMod.Name => "Cim Care Mod";
 
-        string IUserMod.Description => "Enables functionality for Nursing Home Assets to function as working Nursing Homes.";
+        string IUserMod.Description => "Enables functionality for Nursing Home Assets and Orphanage Assets to function as working Nursing Homes and Orphanages";
         
         public void OnEnabled() {
              HarmonyHelper.DoOnHarmonyReady(() => Patcher.PatchAll());
@@ -27,13 +33,18 @@ namespace SeniorCitizenCenterMod
             if (HarmonyHelper.IsHarmonyInstalled) Patcher.UnpatchAll();
         }
 
-        public static SeniorCitizenCenterMod getInstance() {
+        public static CimCareMod getInstance() {
             return instance;
         }
 
         public NursingHomeInitializer getNursingHomeInitializer()
 	    {
 		    return nursingHomeInitializer;
+	    }
+
+        public OrphanageInitializer getOrphanageInitializer()
+	    {
+		    return orphanageInitializer;
 	    }
 
         public OptionsManager getOptionsManager() {
@@ -46,12 +57,16 @@ namespace SeniorCitizenCenterMod
         }
 
         public override void OnCreated(ILoading loading) {
-            Logger.logInfo(LOG_BASE, "SeniorCitizenCenterMod Created");
+            Logger.logInfo(LOG_BASE, "CimCareMod Created");
             instance = this;
             base.OnCreated(loading);
             if (!(this.nursingHomeInitializerObj != null)) {
-                this.nursingHomeInitializerObj = new GameObject("SeniorCitizenCenterMod Nursing Homes");
+                this.nursingHomeInitializerObj = new GameObject("CimCareMod Nursing Homes");
                 this.nursingHomeInitializer = this.nursingHomeInitializerObj.AddComponent<NursingHomeInitializer>();
+            }
+            if (!(this.orphanageInitializerObj != null)) {
+                this.orphanageInitializerObj = new GameObject("CimCareMod Nursing Homes");
+                this.orphanageInitializer = this.orphanageInitializerObj.AddComponent<OrphanageInitializer>();
             }
         }
 
@@ -59,20 +74,23 @@ namespace SeniorCitizenCenterMod
 	    {
 		    base.OnLevelUnloading();
 		    nursingHomeInitializer?.OnLevelUnloading();
+            orphanageInitializer?.OnLevelUnloading();
 	    }
 
         public override void OnLevelLoaded(LoadMode mode) {
-            Logger.logInfo(true, "SeniorCitizenCenterMod Level Loaded: {0}", mode);
+            Logger.logInfo(true, "CimCareMod Level Loaded: {0}", mode);
 		    base.OnLevelLoaded(mode);
 		    switch (mode)
 		    {
 		        case LoadMode.NewGame:
 		        case LoadMode.LoadGame:
 			        nursingHomeInitializer?.OnLevelWasLoaded(6);
+                    orphanageInitializer?.OnLevelWasLoaded(6);
 			    break;
 		        case LoadMode.NewAsset:
 		        case LoadMode.LoadAsset:
 			        nursingHomeInitializer?.OnLevelWasLoaded(19);
+                    orphanageInitializer?.OnLevelWasLoaded(19);
 			    break;
 		    }
         }
@@ -82,6 +100,9 @@ namespace SeniorCitizenCenterMod
             if (!HarmonyHelper.IsHarmonyInstalled)
             {
                 return;
+            }
+            if (this.nursingHomeInitializerObj != null) {
+                Object.Destroy(this.nursingHomeInitializerObj);
             }
             if (this.nursingHomeInitializerObj != null) {
                 Object.Destroy(this.nursingHomeInitializerObj);

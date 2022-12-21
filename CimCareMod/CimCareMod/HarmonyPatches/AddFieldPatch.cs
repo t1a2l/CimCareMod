@@ -1,9 +1,9 @@
 ﻿using System;
 using ColossalFramework.UI;
 using HarmonyLib;
-using SeniorCitizenCenterMod.AI;
+using CimCareMod.AI;
 
-namespace SeniorCitizenCenterMod.HarmonyPatches
+namespace CimCareMod.HarmonyPatches
 {
     [HarmonyPatch(typeof(DecorationPropertiesPanel))]
     public class AddFieldPatch
@@ -14,7 +14,7 @@ namespace SeniorCitizenCenterMod.HarmonyPatches
         [HarmonyPrefix]
         public static bool AddField(DecorationPropertiesPanel __instance, UIComponent container, string locale, float width, Type type, string name, int arrayIndex, object target, object initialValue)
 		{
-			if(target is NursingHomeAI && name.StartsWith("m_workPlaceCount"))
+			if((target is NursingHomeAI || target is OrphanageAI) && name.StartsWith("m_workPlaceCount"))
             {
                 return false;
             }

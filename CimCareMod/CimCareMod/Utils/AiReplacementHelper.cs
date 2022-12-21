@@ -1,15 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using SeniorCitizenCenterMod.AI;
+using CimCareMod.AI;
 
-namespace SeniorCitizenCenterMod.Utils {
+namespace CimCareMod.Utils {
     public static class AiReplacementHelper {
 
-        public static void ApplyNewAIToBuilding(BuildingInfo b) {
+        public static void ApplyNewAIToBuilding(BuildingInfo b, string type) {
             try {
-                ChangeBuildingAI(b, typeof(NursingHomeAI));
-                return;
+                if (type == "NursingHome")
+                {
+                    ChangeBuildingAI(b, typeof(NursingHomeAI));
+                }
+                else if (type == "Orphanage")
+                {
+                    ChangeBuildingAI(b, typeof(OrphanageAI));
+                }
             }
             catch (Exception e) {
                 Logger.logInfo(e.ToString());
