@@ -12,7 +12,7 @@ namespace CimCareMod.Utils
             {
                 switch (typeName)
                 {
-                    case "SeniorCitizenCenterMod.NursingHomeAi": return typeof(NursingHomeAI);
+                    case "CimCareMod.NursingHomeAi": return typeof(NursingHomeAI);
                 }
             }
 

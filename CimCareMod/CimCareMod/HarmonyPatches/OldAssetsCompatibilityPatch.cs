@@ -14,7 +14,7 @@ namespace CimCareMod.HarmonyPatches
             {
                 if(temp[0] == "SeniorCitizenCenterMod.NursingHomeAi" || temp[0] == "SeniorCitizenCenterMod.NursingHomeAI")
                 {
-                    __result = "SeniorCitizenCenterMod.AI.NursingHomeAI, SeniorCitizenCenterMod, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null";
+                    __result = "CimCareMod.AI.NursingHomeAI, CimCareMod, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null";
                 }
             }
 		    Logger.logInfo(__result);
