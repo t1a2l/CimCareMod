@@ -6,7 +6,6 @@ namespace CimCareMod
 {
     public class CimCareMod : LoadingExtensionBase, IUserMod, ISerializableData  
     {
-
         private const bool LOG_BASE = true;
 
         private OptionsManager optionsManager = new OptionsManager();
