@@ -204,8 +204,8 @@ namespace CimCareMod.Utils
             Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.loadOptions -- Loading Options");
             Options options = new();
 
-            string old_file_path = "CimCareModOptions.xml";
-            string new_file_path = "";
+            string old_file_path = "SeniorCitizenCenterMod.xml";
+            string new_file_path = "CimCareModOptions.xml";
 
             try 
             {

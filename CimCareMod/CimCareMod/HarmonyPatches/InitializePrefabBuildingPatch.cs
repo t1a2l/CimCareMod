@@ -21,11 +21,11 @@ namespace CimCareMod.HarmonyPatches
                     var newAI = (PrefabAI)__instance.gameObject.AddComponent<OrphanageAI>();
                     PrefabUtil.TryCopyAttributes(oldAI, newAI, false);
                 } 
-                else if (__instance.m_class.m_service == ItemClass.Service.HealthCare &&  __instance.name.Contains("OR123"))
+                else if (__instance.m_class.m_service == ItemClass.Service.HealthCare &&  __instance.name.Contains("NH123"))
                 {
                     var oldAI = __instance.GetComponent<PrefabAI>();
                     Object.DestroyImmediate(oldAI);
-                    var newAI = (PrefabAI)__instance.gameObject.AddComponent<OrphanageAI>();
+                    var newAI = (PrefabAI)__instance.gameObject.AddComponent<NursingHomeAI>();
                     PrefabUtil.TryCopyAttributes(oldAI, newAI, false);
                 }
             }
@@ -61,8 +61,6 @@ namespace CimCareMod.HarmonyPatches
                         buildingInfo.m_class = elderCareBuildingInfo.m_class;
                         nursingHomeAI.updateCapacity(elderCareCapcityModifier);  
                     }
-
-
                 }
             }
             catch (Exception e)

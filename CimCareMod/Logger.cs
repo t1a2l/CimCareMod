@@ -5,8 +5,8 @@ namespace CimCareMod {
     internal static class Logger {
         private static readonly string Prefix = "CimCareMod: ";
 
-        public static readonly bool LOG_OPTIONS = true;
-        public static readonly bool LOG_CAPACITY_MANAGEMENT = true;
+        public static readonly bool LOG_OPTIONS = false;
+        public static readonly bool LOG_CAPACITY_MANAGEMENT = false;
         public static readonly bool LOG_INCOME = false;
 
         public static void logInfo(bool shouldLog, string message, params object[] args) 
