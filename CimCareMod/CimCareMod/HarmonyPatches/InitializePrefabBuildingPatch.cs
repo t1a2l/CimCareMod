@@ -14,14 +14,14 @@ namespace CimCareMod.HarmonyPatches
         {
             try
             {
-                if (__instance.m_class.m_service == ItemClass.Service.HealthCare &&  __instance.name.Contains("OR123"))
+                if (__instance.m_class.m_service == ItemClass.Service.HealthCare &&  __instance.name.Contains("OR123") && __instance.GetAI() is not OrphanageAI)
                 {
                     var oldAI = __instance.GetComponent<PrefabAI>();
                     Object.DestroyImmediate(oldAI);
                     var newAI = (PrefabAI)__instance.gameObject.AddComponent<OrphanageAI>();
                     PrefabUtil.TryCopyAttributes(oldAI, newAI, false);
                 } 
-                else if (__instance.m_class.m_service == ItemClass.Service.HealthCare &&  __instance.name.Contains("NH123"))
+                else if (__instance.m_class.m_service == ItemClass.Service.HealthCare &&  __instance.name.Contains("NH123") && __instance.GetAI() is not NursingHomeAI)
                 {
                     var oldAI = __instance.GetComponent<PrefabAI>();
                     Object.DestroyImmediate(oldAI);
