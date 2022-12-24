@@ -189,10 +189,8 @@ namespace CimCareMod.Utils
 
             try 
             {
-                using (StreamWriter streamWriter = new StreamWriter("CimCareModOptions.xml")) 
-                {
-                    new XmlSerializer(typeof(OptionsManager.Options)).Serialize(streamWriter, options);
-                }
+                using StreamWriter streamWriter = new("CimCareModOptions.xml");
+                new XmlSerializer(typeof(Options)).Serialize(streamWriter, options);
             } 
             catch (Exception e) 
             {
@@ -204,14 +202,26 @@ namespace CimCareMod.Utils
         public void loadOptions() 
         {
             Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.loadOptions -- Loading Options");
-            OptionsManager.Options options = new OptionsManager.Options();
+            Options options = new();
+
+            string old_file_path = "CimCareModOptions.xml";
+            string new_file_path = "";
 
             try 
             {
-                using (StreamReader streamReader = new StreamReader("CimCareModOptions.xml")) 
+                if(File.Exists(old_file_path))
                 {
-                    options = (OptionsManager.Options) new XmlSerializer(typeof(OptionsManager.Options)).Deserialize(streamReader);
+                    using StreamReader streamReader = new(old_file_path);
+                    options = (Options) new XmlSerializer(typeof(Options)).Deserialize(streamReader);
+                    File.Delete(old_file_path);
                 }
+                else
+                {
+                    using StreamReader streamReader = new(new_file_path);
+                    options = (Options)new XmlSerializer(typeof(Options)).Deserialize(streamReader);
+                }
+
+                
             } 
             catch (FileNotFoundException) 
             {

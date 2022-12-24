@@ -1,6 +1,8 @@
 ﻿using ICities;
 using CitiesHarmony.API;
 using CimCareMod.Utils;
+using System.IO;
+using ColossalFramework;
 
 namespace CimCareMod
 {
@@ -8,7 +10,7 @@ namespace CimCareMod
     {
         private const bool LOG_BASE = true;
 
-        private OptionsManager optionsManager = new OptionsManager();
+        private OptionsManager optionsManager = new();
 
         public new IManagers managers { get; }
 
@@ -19,7 +21,8 @@ namespace CimCareMod
         
         public void OnEnabled() 
         {
-             HarmonyHelper.DoOnHarmonyReady(() => Patcher.PatchAll());
+            HarmonyHelper.DoOnHarmonyReady(() => Patcher.PatchAll());
+            DeleteOldDLLFiles();
         }
 
         public void OnDisabled() 
@@ -78,5 +81,28 @@ namespace CimCareMod
 	    {
 		    return false;
 	    }
+
+        private static void DeleteOldDLLFiles()
+        {
+            string assemblyPath = ModUtils.GetAssemblyPath();
+            if (!assemblyPath.IsNullOrWhiteSpace())
+			{
+				string mod_path = Path.Combine(Path.GetFullPath(Path.Combine(assemblyPath, "..\\")), "2559105223");
+
+                DirectoryInfo d = new DirectoryInfo(mod_path);
+
+                FileInfo[] files = d.GetFiles();
+
+                foreach (FileInfo file in files)
+                {
+                    string file_name = Path.GetFileNameWithoutExtension(file.Name);
+
+                    if (file_name == "SeniorCitizenCenterMod")
+                    {
+                        file.Delete();
+                    }
+                }
+			}
+        }
     }
 }
