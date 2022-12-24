@@ -4,7 +4,7 @@ using ColossalFramework;
 using ColossalFramework.Math;
 using UnityEngine;
 using System.Threading;
-using CimCareMod.NursingHomeManagers;
+using CimCareMod.Managers;
 using CimCareMod.Utils;
 
 namespace CimCareMod.AI {

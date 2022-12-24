@@ -6,7 +6,7 @@ using ColossalFramework.Math;
 using ICities;
 using CimCareMod.AI;
 
-namespace CimCareMod.OrphanageManagers 
+namespace CimCareMod.Managers 
 {
     public class OrphanageManager : ThreadingExtensionBase 
     {

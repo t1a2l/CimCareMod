@@ -6,7 +6,7 @@ using ColossalFramework.Math;
 using ICities;
 using CimCareMod.AI;
 
-namespace CimCareMod.NursingHomeManagers 
+namespace CimCareMod.Managers 
 {
     public class NursingHomeManager : ThreadingExtensionBase 
     {
