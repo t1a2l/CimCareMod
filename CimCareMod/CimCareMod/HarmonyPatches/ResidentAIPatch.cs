@@ -2,12 +2,68 @@
 using HarmonyLib;
 using UnityEngine;
 using CimCareMod.AI;
+using ColossalFramework.Math;
 
 namespace CimCareMod.HarmonyPatches
 {
     [HarmonyPatch(typeof(ResidentAI))]
     public static class ResidentAIPatch
     {
+        // dont allow pets
+        [HarmonyPatch(typeof(ResidentAI), "Spawn")]
+        [HarmonyPrefix]
+        public static bool Spawn(ResidentAI __instance, ushort instanceID, ref CitizenInstance data)
+        {
+	        if ((data.m_flags & CitizenInstance.Flags.Character) != 0)
+	        {
+		        return false;
+	        }
+	        data.Spawn(instanceID);
+	        uint citizenId = data.m_citizen;
+	        ushort targetBuilding = data.m_targetBuilding;
+	        if (citizenId == 0 || targetBuilding == 0)
+	        {
+		        return false;
+	        }
+	        Randomizer r = new Randomizer(citizenId);
+	        if (r.Int32(20u) != 0)
+	        {
+		        return false;
+	        }
+	        CitizenManager instance = Singleton<CitizenManager>.instance;
+	        DistrictManager instance2 = Singleton<DistrictManager>.instance;
+	        Vector3 position;
+	        if ((data.m_flags & CitizenInstance.Flags.TargetIsNode) != 0)
+	        {
+		        NetManager instance3 = Singleton<NetManager>.instance;
+		        position = instance3.m_nodes.m_buffer[targetBuilding].m_position;
+	        }
+	        else
+	        {
+		        BuildingManager instance4 = Singleton<BuildingManager>.instance;
+		        position = instance4.m_buildings.m_buffer[targetBuilding].m_position;
+	        }
+	        byte district = instance2.GetDistrict(data.m_targetPos);
+	        byte district2 = instance2.GetDistrict(position);
+	        DistrictPolicies.Services servicePolicies = instance2.m_districts.m_buffer[district].m_servicePolicies;
+	        DistrictPolicies.Services servicePolicies2 = instance2.m_districts.m_buffer[district2].m_servicePolicies;
+            Citizen citizen = instance.m_citizens.m_buffer[citizenId];
+            Building homeBuilding = Singleton<BuildingManager>.instance.m_buildings.m_buffer[citizen.m_homeBuilding];
+
+	        if (((servicePolicies | servicePolicies2) & DistrictPolicies.Services.PetBan) == 0 
+                && (IsChild(citizenId) && homeBuilding.Info.GetAI() is not OrphanageAI)
+                && (IsSenior(citizenId) && homeBuilding.Info.GetAI() is not NursingHomeAI))
+	        {
+		        CitizenInfo groupAnimalInfo = instance.GetGroupAnimalInfo(ref r, __instance.m_info.m_class.m_service, __instance.m_info.m_class.m_subService);
+		        if ((object)groupAnimalInfo != null && instance.CreateCitizenInstance(out var instance5, ref r, groupAnimalInfo, 0u))
+		        {
+			        groupAnimalInfo.m_citizenAI.SetSource(instance5, ref instance.m_instances.m_buffer[instance5], instanceID);
+			        groupAnimalInfo.m_citizenAI.SetTarget(instance5, ref instance.m_instances.m_buffer[instance5], instanceID);
+		        }
+	        }
+            return false;
+        }
+
 		// Overwrite the base games FindHospital function with our own fixed version.
         [HarmonyPatch(typeof(ResidentAI), "FindHospital")]
         [HarmonyPrefix]
