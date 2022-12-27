@@ -87,21 +87,26 @@ namespace CimCareMod
             string assemblyPath = ModUtils.GetAssemblyPath();
             if (!assemblyPath.IsNullOrWhiteSpace())
 			{
-				string mod_path = Path.Combine(Path.GetFullPath(Path.Combine(assemblyPath, "..\\")), "2559105223");
+                // 2559105223
+				string mod_path = Path.Combine(Path.GetFullPath(Path.Combine(assemblyPath, "..\\")), "111");
 
-                DirectoryInfo d = new DirectoryInfo(mod_path);
-
-                FileInfo[] files = d.GetFiles();
-
-                foreach (FileInfo file in files)
+                if(Directory.Exists(mod_path))
                 {
-                    string file_name = Path.GetFileNameWithoutExtension(file.Name);
+                    DirectoryInfo d = new DirectoryInfo(mod_path);
 
-                    if (file_name == "SeniorCitizenCenterMod")
+                    FileInfo[] files = d.GetFiles();
+
+                    foreach (FileInfo file in files)
                     {
-                        file.Delete();
+                        string file_name = Path.GetFileNameWithoutExtension(file.Name);
+
+                        if (file_name == "SeniorCitizenCenterMod")
+                        {
+                            file.Delete();
+                        }
                     }
                 }
+
 			}
         }
     }
