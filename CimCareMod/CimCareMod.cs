@@ -87,12 +87,11 @@ namespace CimCareMod
             string assemblyPath = ModUtils.GetAssemblyPath();
             if (!assemblyPath.IsNullOrWhiteSpace())
 			{
-                // 2559105223
-				string mod_path = Path.Combine(Path.GetFullPath(Path.Combine(assemblyPath, "..\\")), "111");
+				string mod_path = Path.Combine(Path.GetFullPath(Path.Combine(assemblyPath, "..\\")), "2559105223");
 
                 if(Directory.Exists(mod_path))
                 {
-                    DirectoryInfo d = new DirectoryInfo(mod_path);
+                    DirectoryInfo d = new(mod_path);
 
                     FileInfo[] files = d.GetFiles();
 
