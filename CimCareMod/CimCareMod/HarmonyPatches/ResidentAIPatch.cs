@@ -50,12 +50,14 @@ namespace CimCareMod.HarmonyPatches
             Citizen citizen = instance.m_citizens.m_buffer[citizenId];
             Building homeBuilding = Singleton<BuildingManager>.instance.m_buildings.m_buffer[citizen.m_homeBuilding];
 
-	        if (((servicePolicies | servicePolicies2) & DistrictPolicies.Services.PetBan) == 0 
-                && (IsChild(citizenId) && homeBuilding.Info.GetAI() is not OrphanageAI)
-                && (IsSenior(citizenId) && homeBuilding.Info.GetAI() is not NursingHomeAI))
+            var pet_ban = ((servicePolicies | servicePolicies2) & DistrictPolicies.Services.PetBan) != 0;
+            var orphanage_child = IsChild(citizenId) && homeBuilding.Info.GetAI() is OrphanageAI;
+            var nursing_home_senior = IsSenior(citizenId) && homeBuilding.Info.GetAI() is NursingHomeAI;
+
+	        if (!pet_ban && !orphanage_child && !nursing_home_senior)
 	        {
 		        CitizenInfo groupAnimalInfo = instance.GetGroupAnimalInfo(ref r, __instance.m_info.m_class.m_service, __instance.m_info.m_class.m_subService);
-		        if ((object)groupAnimalInfo != null && instance.CreateCitizenInstance(out var instance5, ref r, groupAnimalInfo, 0u))
+		        if (groupAnimalInfo != null && instance.CreateCitizenInstance(out var instance5, ref r, groupAnimalInfo, 0u))
 		        {
 			        groupAnimalInfo.m_citizenAI.SetSource(instance5, ref instance.m_instances.m_buffer[instance5], instanceID);
 			        groupAnimalInfo.m_citizenAI.SetTarget(instance5, ref instance.m_instances.m_buffer[instance5], instanceID);
