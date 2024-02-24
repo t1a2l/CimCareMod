@@ -6,9 +6,9 @@ using ColossalFramework.Math;
 using ICities;
 using CimCareMod.AI;
 
-namespace CimCareMod.Managers 
+namespace CimCareMod.Managers
 {
-    public class OrphanageManager : ThreadingExtensionBase 
+    public class OrphanageManager : ThreadingExtensionBase
     {
         private const int DEFAULT_NUM_SEARCH_ATTEMPTS = 3;
 
@@ -17,121 +17,156 @@ namespace CimCareMod.Managers
         private readonly BuildingManager buildingManager;
         private readonly CitizenManager citizenManager;
 
-        private readonly uint[] familiesWithChildren;
-        private readonly uint[] orphanesMovingOut;
+        private readonly List<uint> familiesWithChildren;
+        private readonly List<uint> orphanesMovingOut;
 
         private readonly HashSet<uint> childrenBeingProcessed;
-        private uint numFamiliesWithChildren;
-
-        private uint numOrphanesMoveOut;
 
         private Randomizer randomizer;
 
-        private int refreshTimer;
         private int running;
 
-        public OrphanageManager() 
+        private const int StepMask = 0xFF;
+        private const int BuildingStepSize = 192;
+        private ushort orphanCheckStep;
+
+        private int orphanCheckCounter;
+
+        public OrphanageManager()
         {
             Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager Created");
             instance = this;
 
-            this.randomizer = new Randomizer((uint) 73);
+            this.randomizer = new Randomizer((uint)73);
             this.citizenManager = Singleton<CitizenManager>.instance;
             this.buildingManager = Singleton<BuildingManager>.instance;
 
-            uint numCitizenUnits = this.citizenManager.m_units.m_size;
+            this.familiesWithChildren = [];
+            this.orphanesMovingOut = [];
 
-            this.familiesWithChildren = new uint[numCitizenUnits];
-            this.orphanesMovingOut  = new uint[numCitizenUnits];
-
-            this.childrenBeingProcessed = new HashSet<uint>();
-
-            this.numFamiliesWithChildren = 0;
-
-            this.numOrphanesMoveOut = 0;
+            this.childrenBeingProcessed = [];
         }
 
-        public static OrphanageManager getInstance() 
+        public static OrphanageManager getInstance()
         {
             return instance;
         }
 
-        public override void OnBeforeSimulationTick() 
+        public override void OnBeforeSimulationFrame()
         {
-            // Refresh every every so often
-            if (this.refreshTimer++ % 600 == 0) 
+            uint currentFrame = SimulationManager.instance.m_currentFrameIndex;
+            ProcessFrame(currentFrame);
+        }
+
+        public void ProcessFrame(uint frameIndex)
+        {
+            RefreshChildren();
+
+            if ((frameIndex & StepMask) != 0)
             {
-                // Make sure refresh can occur, otherwise set the timer so it will trigger again next try
-                if (Interlocked.CompareExchange(ref this.running, 1, 0) == 1) 
-                {
-                    this.refreshTimer = 0;
-                    return;
-                }
-
-                // Refresh the Children Citizens Array
-                this.refreshChildren();
-
-                // Reset the timer and running flag
-                this.refreshTimer = 1;
-                this.running = 0;
+                return;
             }
         }
 
-        private void refreshChildren() 
+        private void RefreshChildren()
         {
-            CitizenUnit[] citizenUnits = this.citizenManager.m_units.m_buffer;
-            this.numFamiliesWithChildren = 0;
-            this.numOrphanesMoveOut = 0;
-            for (uint i = 0; i < citizenUnits.Length; i++) 
+            if (orphanCheckCounter > 0)
             {
-                CitizenUnit citizenUnit = citizenUnits[i];
-                if((citizenUnit.m_flags & CitizenUnit.Flags.Created) == 0 || citizenUnit.Empty())
+                --orphanCheckCounter;
+                return;
+            }
+
+            if (Interlocked.CompareExchange(ref this.running, 1, 0) == 1)
+            {
+                return;
+            }
+
+            ushort step = orphanCheckStep;
+            orphanCheckStep = (ushort)((step + 1) & StepMask);
+
+            RefreshChildren(step);
+
+            this.running = 0;
+        }
+
+        private void RefreshChildren(ushort step)
+        {
+            CitizenManager instance = Singleton<CitizenManager>.instance;
+
+            ushort first = (ushort)(step * BuildingStepSize);
+            ushort last = (ushort)((step + 1) * BuildingStepSize - 1);
+
+            for (ushort i = first; i <= last; ++i)
+            {
+                var building = buildingManager.m_buildings.m_buffer[i];
+                if (building.Info.GetAI() is not ResidentialBuildingAI && building.Info.GetAI() is not OrphanageAI)
                 {
                     continue;
                 }
-                for (int j = 0; j < 5; j++) 
+                if ((building.m_flags & Building.Flags.Created) == 0)
                 {
-                    uint citizenId = citizenUnit.GetCitizen(j);
-                    Citizen citizen = citizenManager.m_citizens.m_buffer[citizenId];
-                    if (citizen.m_flags.IsFlagSet(Citizen.Flags.Created) && this.validateChild(citizenId)) 
+                    continue;
+                }
+
+                uint num = building.m_citizenUnits;
+                int num2 = 0;
+                while (num != 0)
+                {
+                    var citizenUnit = instance.m_units.m_buffer[num];
+                    uint nextUnit = citizenUnit.m_nextUnit;
+                    if ((instance.m_units.m_buffer[num].m_flags & CitizenUnit.Flags.Home) != 0 && !citizenUnit.Empty())
                     {
-                        if(this.isMovingIn(citizenId))
+                        for (int j = 0; j < 5; j++)
                         {
-                            this.familiesWithChildren[this.numFamiliesWithChildren++] = i;
-                            break;
+                            uint citizenId = citizenUnit.GetCitizen(j);
+                            Citizen citizen = citizenManager.m_citizens.m_buffer[citizenId];
+                            if (citizen.m_flags.IsFlagSet(Citizen.Flags.Created) && this.validateChild(citizenId))
+                            {
+                                if (this.isMovingIn(citizenId))
+                                {
+                                    this.familiesWithChildren.Add(num);
+                                    break;
+                                }
+                                else if (this.isMovingOut(citizenId))
+                                {
+                                    this.orphanesMovingOut.Add(num);
+                                    break;
+                                }
+                            }
                         }
-                        else if(this.isMovingOut(citizenId))
-                        {
-                            this.orphanesMovingOut[this.numOrphanesMoveOut++] = i;
-                            break;
-                        }
+                    }
+                    num = nextUnit;
+                    if (++num2 > 524288)
+                    {
+                        CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
+                        break;
                     }
                 }
             }
         }
 
-        public uint[] getFamilyWithChildren() 
+        public uint[] getFamilyWithChildren()
         {
             return this.getFamilyWithChildren(DEFAULT_NUM_SEARCH_ATTEMPTS);
         }
 
-        public uint[] getOrphanesRoom() 
+        public uint[] getOrphanesRoom()
         {
             return this.getOrphanesRoom(DEFAULT_NUM_SEARCH_ATTEMPTS);
         }
 
-        public uint[] getFamilyWithChildren(int numAttempts) 
+        public uint[] getFamilyWithChildren(int numAttempts)
         {
             Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getFamilyWithChildren -- Start");
             // Lock to prevent refreshing while running, otherwise bail
-            if (Interlocked.CompareExchange(ref this.running, 1, 0) == 1) 
+            if (Interlocked.CompareExchange(ref this.running, 1, 0) == 1)
             {
                 return null;
             }
 
             // Get random family that contains at least one child
             uint[] family = this.getFamilyWithChildrenInternal(numAttempts);
-            if (family == null) 
+            if (family == null)
             {
                 Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getFamilyWithChildren -- No Family");
                 this.running = 0;
@@ -139,9 +174,9 @@ namespace CimCareMod.Managers
             }
 
             // Mark all children in the family as being processed
-            foreach (uint familyMember in family) 
+            foreach (uint familyMember in family)
             {
-                if (this.isChild(familyMember)) 
+                if (this.isChild(familyMember))
                 {
                     this.childrenBeingProcessed.Add(familyMember);
                 }
@@ -152,18 +187,18 @@ namespace CimCareMod.Managers
             return family;
         }
 
-        public uint[] getOrphanesRoom(int numAttempts) 
+        public uint[] getOrphanesRoom(int numAttempts)
         {
             Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getOrphanesRoom -- Start");
             // Lock to prevent refreshing while running, otherwise bail
-            if (Interlocked.CompareExchange(ref this.running, 1, 0) == 1) 
+            if (Interlocked.CompareExchange(ref this.running, 1, 0) == 1)
             {
                 return null;
             }
 
             // Get random room from the orphanage
             uint[] orphanage_room = this.getOrphanesRoomInternal(numAttempts);
-            if (orphanage_room == null) 
+            if (orphanage_room == null)
             {
                 Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getOrphanesRoomInternal -- No orphans in this room");
                 this.running = 0;
@@ -171,9 +206,9 @@ namespace CimCareMod.Managers
             }
 
             // Mark orphan as being processed
-            foreach (uint orphan in orphanage_room) 
+            foreach (uint orphan in orphanage_room)
             {
-                if(this.isChild(orphan))
+                if (this.isChild(orphan))
                 {
                     this.childrenBeingProcessed.Add(orphan);
                 }
@@ -184,15 +219,15 @@ namespace CimCareMod.Managers
             return orphanage_room;
         }
 
-        public void doneProcessingChild(uint childId) 
+        public void doneProcessingChild(uint childId)
         {
             this.childrenBeingProcessed.Remove(childId);
         }
 
-        private uint[] getFamilyWithChildrenInternal(int numAttempts) 
+        private uint[] getFamilyWithChildrenInternal(int numAttempts)
         {
             // Check to see if too many attempts already
-            if (numAttempts <= 0) 
+            if (numAttempts <= 0)
             {
                 return null;
             }
@@ -200,7 +235,7 @@ namespace CimCareMod.Managers
             // Get a random child
             uint familyId = this.fetchRandomFamilyWithChildren();
             Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getFamilyWithChildrenInternal -- Family Id: {0}", familyId);
-            if (familyId == 0) 
+            if (familyId == 0)
             {
                 // No Family with Children to be located
                 return null;
@@ -211,12 +246,12 @@ namespace CimCareMod.Managers
             CitizenUnit familyWithChildren = this.citizenManager.m_units.m_buffer[familyId];
             uint[] family = new uint[5];
             bool childrenPresent = false;
-            for (int i = 0; i < 5; i++) 
+            for (int i = 0; i < 5; i++)
             {
                 uint familyMember = familyWithChildren.GetCitizen(i);
-                if (this.isChild(familyMember)) 
+                if (this.isChild(familyMember))
                 {
-                    if (!this.validateChild(familyMember)) 
+                    if (!this.validateChild(familyMember))
                     {
                         // This particular Child is no longer valid for some reason, call recursively with one less attempt
                         return this.getFamilyWithChildrenInternal(--numAttempts);
@@ -227,7 +262,7 @@ namespace CimCareMod.Managers
                 family[i] = familyMember;
             }
 
-            if (!childrenPresent) 
+            if (!childrenPresent)
             {
                 // No Children was found in this family (which is a bit weird), try again
                 return this.getFamilyWithChildrenInternal(--numAttempts);
@@ -236,19 +271,19 @@ namespace CimCareMod.Managers
             return family;
         }
 
-        private uint[] getOrphanesRoomInternal(int numAttempts) 
+        private uint[] getOrphanesRoomInternal(int numAttempts)
         {
             // Check to see if too many attempts already
-            if (numAttempts <= 0) 
+            if (numAttempts <= 0)
             {
                 return null;
             }
 
             // Get a random orphanage room
-            uint orphanageRoomId = this.fetchRandomOrphanageRoom();  
+            uint orphanageRoomId = this.fetchRandomOrphanageRoom();
 
             Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getOrphanesRoomInternal -- Family Id: {0}", orphanageRoomId);
-            if (orphanageRoomId == 0) 
+            if (orphanageRoomId == 0)
             {
                 // No dorm apartment to be located
                 return null;
@@ -256,51 +291,58 @@ namespace CimCareMod.Managers
 
             // create an array of orphans to move out of the orphanage
             CitizenUnit orphanageRoom = this.citizenManager.m_units.m_buffer[orphanageRoomId];
-            uint[] orphanage_room = new uint[] {0, 0, 0, 0, 0};
-            for (int i = 0; i < 5; i++) 
+            uint[] orphanage_room = new uint[] { 0, 0, 0, 0, 0 };
+            for (int i = 0; i < 5; i++)
             {
                 uint orphanId = orphanageRoom.GetCitizen(i);
                 Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getOrphanesRoomInternal -- Family Member: {0}", orphanId);
                 // not a child anymore -> move out
-                if(orphanId != 0 && !this.isChild(orphanId))
+                if (orphanId != 0 && !this.isChild(orphanId))
                 {
-                    if (!this.validateChild(orphanId)) {
+                    if (!this.validateChild(orphanId))
+                    {
                         // This particular student is already being processed
                         return this.getOrphanesRoomInternal(--numAttempts);
                     }
                     Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getOrphanesRoomInternal -- Family Member: {0}, is not an orphan", orphanId);
                     orphanage_room[i] = orphanId;
-                } 
+                }
             }
 
             return orphanage_room;
- 
+
         }
 
-        private uint fetchRandomFamilyWithChildren() {
-            if (this.numFamiliesWithChildren <= 0) {
-                return 0;
-            }
-
-            int index = this.randomizer.Int32(this.numFamiliesWithChildren);
-            return this.familiesWithChildren[index];
-        }
-
-        private uint fetchRandomOrphanageRoom() 
+        private uint fetchRandomFamilyWithChildren()
         {
-            if (this.numOrphanesMoveOut <= 0) 
+            if (this.familiesWithChildren.Count == 0)
             {
                 return 0;
             }
 
-            int index = this.randomizer.Int32(this.numOrphanesMoveOut);
-            return this.orphanesMovingOut[index];
+            int index = this.randomizer.Int32((uint)this.familiesWithChildren.Count);
+            var family = this.familiesWithChildren[index];
+            this.familiesWithChildren.RemoveAt(index);
+            return family;
         }
 
-        private bool validateChild(uint childId) 
+        private uint fetchRandomOrphanageRoom()
+        {
+            if (this.orphanesMovingOut.Count == 0)
+            {
+                return 0;
+            }
+
+            int index = this.randomizer.Int32((uint)this.orphanesMovingOut.Count);
+            var family = this.orphanesMovingOut[index];
+            this.orphanesMovingOut.RemoveAt(index);
+            return family;
+        }
+
+        private bool validateChild(uint childId)
         {
             // Validate this Child is not already being processed
-            if (this.childrenBeingProcessed.Contains(childId)) 
+            if (this.childrenBeingProcessed.Contains(childId))
             {
                 return false; // being processed 
             }
@@ -308,32 +350,32 @@ namespace CimCareMod.Managers
             return true; // not being processed
         }
 
-        public bool isChild(uint childId) 
+        public bool isChild(uint childId)
         {
-            if (childId == 0) 
+            if (childId == 0)
             {
                 return false;
             }
 
             // Validate not dead
-            if (this.citizenManager.m_citizens.m_buffer[childId].Dead) 
+            if (this.citizenManager.m_citizens.m_buffer[childId].Dead)
             {
                 return false;
             }
 
             // Validate is child or teenager
             Citizen.AgeGroup age_group = Citizen.GetAgeGroup(this.citizenManager.m_citizens.m_buffer[childId].Age);
-            if (age_group != Citizen.AgeGroup.Child && age_group != Citizen.AgeGroup.Teen) 
+            if (age_group != Citizen.AgeGroup.Child && age_group != Citizen.AgeGroup.Teen)
             {
                 return false;
             }
 
             return true;
         }
- 
+
         private bool isMovingIn(uint citizenId)
         {
-            if(!isChild(citizenId))
+            if (!isChild(citizenId))
             {
                 return false;
             }
@@ -341,7 +383,7 @@ namespace CimCareMod.Managers
             ushort homeBuildingId = this.citizenManager.m_citizens.m_buffer[citizenId].m_homeBuilding;
 
             // no home move to orphanage
-            if (homeBuildingId == 0) 
+            if (homeBuildingId == 0)
             {
                 return true;
             }
@@ -349,10 +391,10 @@ namespace CimCareMod.Managers
             Building homeBuilding = buildingManager.m_buildings.m_buffer[homeBuildingId];
 
             // if already living in an orphanage
-            if(homeBuilding.Info.m_buildingAI is OrphanageAI)
+            if (homeBuilding.Info.m_buildingAI is OrphanageAI)
             {
                 return false;
-            } 
+            }
 
             return true;
         }
@@ -362,7 +404,7 @@ namespace CimCareMod.Managers
             // if this child is living in an orphanage we should check the entire room
             ushort homeBuildingId = this.citizenManager.m_citizens.m_buffer[citizenId].m_homeBuilding;
             Building homeBuilding = buildingManager.m_buildings.m_buffer[homeBuildingId];
-            if(homeBuilding.Info.m_buildingAI is OrphanageAI)
+            if (homeBuilding.Info.m_buildingAI is OrphanageAI)
             {
                 return true;
             }
@@ -370,6 +412,6 @@ namespace CimCareMod.Managers
             return false;
         }
 
-        
+
     }
 }

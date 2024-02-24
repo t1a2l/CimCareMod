@@ -17,14 +17,19 @@ namespace CimCareMod.Managers
         private readonly BuildingManager buildingManager;
         private readonly CitizenManager citizenManager;
 
-        private readonly uint[] familiesWithSeniors;
+        private readonly List<uint> familiesWithSeniors;
+
         private readonly HashSet<uint> seniorCitizensBeingProcessed;
-        private uint numSeniorCitizenFamilies;
 
         private Randomizer randomizer;
 
-        private int refreshTimer;
         private int running;
+
+        private const int StepMask = 0xFF;
+        private const int BuildingStepSize = 192;
+        private ushort seniorCheckStep;
+
+        private int seniorCheckCounter;
 
         public NursingHomeManager() 
         {
@@ -35,12 +40,9 @@ namespace CimCareMod.Managers
             this.citizenManager = Singleton<CitizenManager>.instance;
             this.buildingManager = Singleton<BuildingManager>.instance;
 
-            uint numCitizenUnits = this.citizenManager.m_units.m_size;
+            this.familiesWithSeniors = [];
 
-            // TODO: This array size is excessive but will allow for never worrying about resizing, should consider allowing for resizing instead
-            this.familiesWithSeniors = new uint[numCitizenUnits];
-
-            this.seniorCitizensBeingProcessed = new HashSet<uint>();
+            this.seniorCitizensBeingProcessed = [];
         }
 
         public static NursingHomeManager getInstance() 
@@ -48,39 +50,84 @@ namespace CimCareMod.Managers
             return instance;
         }
 
-        public override void OnBeforeSimulationTick() 
+        public override void OnBeforeSimulationFrame()
         {
-            // Refresh every every so often
-            if (this.refreshTimer++ % 600 == 0) 
+            uint currentFrame = SimulationManager.instance.m_currentFrameIndex;
+            ProcessFrame(currentFrame);
+        }
+
+        public void ProcessFrame(uint frameIndex)
+        {
+            RefreshSeniorCitizens();
+
+            if ((frameIndex & StepMask) != 0)
             {
-                // Make sure refresh can occur, otherwise set the timer so it will trigger again next try
-                if (Interlocked.CompareExchange(ref this.running, 1, 0) == 1) 
-                {
-                    this.refreshTimer = 0;
-                    return;
-                }
-
-                // Refresh the Senior Citizens Array
-                this.refreshSeniorCitizens();
-
-                // Reset the timer and running flag
-                this.refreshTimer = 1;
-                this.running = 0;
+                return;
             }
         }
 
-        private void refreshSeniorCitizens() 
+        private void RefreshSeniorCitizens()
         {
-            CitizenUnit[] citizenUnits = this.citizenManager.m_units.m_buffer;
-            this.numSeniorCitizenFamilies = 0;
-            for (uint i = 0; i < citizenUnits.Length; i++) 
+            if (seniorCheckCounter > 0)
             {
-                for (int j = 0; j < 5; j++) 
+                --seniorCheckCounter;
+                return;
+            }
+
+            if (Interlocked.CompareExchange(ref this.running, 1, 0) == 1)
+            {
+                return;
+            }
+
+            ushort step = seniorCheckStep;
+            seniorCheckStep = (ushort)((step + 1) & StepMask);
+
+            RefreshSeniorCitizens(step);
+
+            this.running = 0;
+        }
+
+        private void RefreshSeniorCitizens(ushort step) 
+        {
+            CitizenManager instance = Singleton<CitizenManager>.instance;
+
+            ushort first = (ushort)(step * BuildingStepSize);
+            ushort last = (ushort)((step + 1) * BuildingStepSize - 1);
+
+            for (ushort i = first; i <= last; ++i)
+            {
+                var building = buildingManager.m_buildings.m_buffer[i];
+                if (building.Info.GetAI() is not ResidentialBuildingAI && building.Info.GetAI() is not NursingHomeAI)
                 {
-                    uint citizenId = citizenUnits[i].GetCitizen(j);
-                    if (this.isSenior(citizenId) && this.validateSeniorCitizen(citizenId)) 
+                    continue;
+                }
+                if ((building.m_flags & Building.Flags.Created) == 0)
+                {
+                    continue;
+                }
+
+                uint num = building.m_citizenUnits;
+                int num2 = 0;
+                while (num != 0)
+                {
+                    var citizenUnit = instance.m_units.m_buffer[num];
+                    uint nextUnit = citizenUnit.m_nextUnit;
+                    if ((instance.m_units.m_buffer[num].m_flags & CitizenUnit.Flags.Home) != 0 && !citizenUnit.Empty())
                     {
-                        this.familiesWithSeniors[this.numSeniorCitizenFamilies++] = i;
+                        for (int j = 0; j < 5; j++)
+                        {
+                            uint citizenId = citizenUnit.GetCitizen(j);
+                            if (citizenManager.m_citizens.m_buffer[citizenId].m_flags.IsFlagSet(Citizen.Flags.Created) && this.isSenior(citizenId) && this.validateSeniorCitizen(citizenId))
+                            {
+                                this.familiesWithSeniors.Add(num);
+                                break;
+                            }
+                        }
+                    }
+                    num = nextUnit;
+                    if (++num2 > 524288)
+                    {
+                        CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
                         break;
                     }
                 }
@@ -179,13 +226,15 @@ namespace CimCareMod.Managers
 
         private uint fetchRandomFamilyWithSeniorCitizen() 
         {
-            if (this.numSeniorCitizenFamilies <= 0) 
+            if (this.familiesWithSeniors.Count == 0)
             {
                 return 0;
             }
 
-            int index = this.randomizer.Int32(this.numSeniorCitizenFamilies);
-            return this.familiesWithSeniors[index];
+            int index = this.randomizer.Int32((uint)this.familiesWithSeniors.Count);
+            var family = this.familiesWithSeniors[index];
+            this.familiesWithSeniors.RemoveAt(index);
+            return family;
         }
 
         public bool isSenior(uint seniorCitizenId) 
