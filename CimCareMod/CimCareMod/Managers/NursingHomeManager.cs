@@ -10,8 +10,6 @@ namespace CimCareMod.Managers
 {
     public class NursingHomeManager : ThreadingExtensionBase 
     {
-        private const bool LOG_SENIORS = false;
-
         private const int DEFAULT_NUM_SEARCH_ATTEMPTS = 3;
 
         private static NursingHomeManager instance;
@@ -30,7 +28,7 @@ namespace CimCareMod.Managers
 
         public NursingHomeManager() 
         {
-            Logger.logInfo(LOG_SENIORS, "NursingHomeManager Created");
+            Logger.LogInfo(Logger.LOG_SENIORS, "NursingHomeManager Created");
             instance = this;
 
             this.randomizer = new Randomizer((uint) 73);
@@ -96,7 +94,7 @@ namespace CimCareMod.Managers
 
         public uint[] getFamilyWithSenior(int numAttempts) 
         {
-            Logger.logInfo(LOG_SENIORS, "NursingHomeManager.getFamilyWithSenior -- Start");
+            Logger.LogInfo(Logger.LOG_SENIORS, "NursingHomeManager.getFamilyWithSenior -- Start");
             // Lock to prevent refreshing while running, otherwise bail
             if (Interlocked.CompareExchange(ref this.running, 1, 0) == 1) 
             {
@@ -107,7 +105,7 @@ namespace CimCareMod.Managers
             uint[] family = this.getFamilyWithSeniorInternal(numAttempts);
             if (family == null) 
             {
-                Logger.logInfo(LOG_SENIORS, "NursingHomeManager.getFamilyWithSenior -- No Family");
+                Logger.LogInfo(Logger.LOG_SENIORS, "NursingHomeManager.getFamilyWithSenior -- No Family");
                 this.running = 0;
                 return null;
             }
@@ -122,7 +120,7 @@ namespace CimCareMod.Managers
             }
 
 
-            Logger.logInfo(LOG_SENIORS, "NursingHomeManager.getFamilyWithSenior -- Finished: {0}", string.Join(", ", Array.ConvertAll(family, item => item.ToString())));
+            Logger.LogInfo(Logger.LOG_SENIORS, "NursingHomeManager.getFamilyWithSenior -- Finished: {0}", string.Join(", ", Array.ConvertAll(family, item => item.ToString())));
             this.running = 0;
             return family;
         }
@@ -142,7 +140,7 @@ namespace CimCareMod.Managers
 
             // Get a random senior citizen
             uint familyId = this.fetchRandomFamilyWithSeniorCitizen();
-            Logger.logInfo(LOG_SENIORS, "NursingHomeManager.getFamilyWithSeniorInternal -- Family Id: {0}", familyId);
+            Logger.LogInfo(Logger.LOG_SENIORS, "NursingHomeManager.getFamilyWithSeniorInternal -- Family Id: {0}", familyId);
             if (familyId == 0) 
             {
                 // No Family with Senior Citizens to be located
@@ -166,7 +164,7 @@ namespace CimCareMod.Managers
                     }
                     seniorPresent = true;
                 }
-                Logger.logInfo(LOG_SENIORS, "NursingHomeManager.getFamilyWithSeniorInternal -- Family Member: {0}", familyMember);
+                Logger.LogInfo(Logger.LOG_SENIORS, "NursingHomeManager.getFamilyWithSeniorInternal -- Family Member: {0}", familyMember);
                 family[i] = familyMember;
             }
 

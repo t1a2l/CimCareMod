@@ -9,8 +9,6 @@ namespace CimCareMod.Managers
 {
     public class MoveInProbabilityHelper 
     {
-        private static readonly bool LOG_CHANCES = false;
-
         private static readonly float BASE_CHANCE_VALUE = 0f;
         private static readonly float AGE_MAX_CHANCE_VALUE = 100f;
         private static readonly float DISTANCE_MAX_CHANCE_VALUE = 100f;
@@ -26,7 +24,7 @@ namespace CimCareMod.Managers
         {
             float chanceValue = BASE_CHANCE_VALUE;
 
-            Logger.logInfo(LOG_CHANCES, "---------------------------------");
+            Logger.LogInfo(Logger.LOG_CHANCES, "---------------------------------");
 
             // Age 
             chanceValue += getAgeChanceValue(family, ref buildingData);
@@ -46,14 +44,14 @@ namespace CimCareMod.Managers
             // Check for no chance
             if (chanceValue <= 0) 
             {
-                Logger.logInfo(LOG_CHANCES, "MoveInProbabilityHelper.checkIfShouldMoveIn -- No Chance: {0}", chanceValue);
+                Logger.LogInfo(Logger.LOG_CHANCES, "MoveInProbabilityHelper.checkIfShouldMoveIn -- No Chance: {0}", chanceValue);
                 return false;
             }
 
             // Check against random value
             uint maxChance = (uint) MAX_CHANCE_VALUE;
             int randomValue = randomizer.Int32(maxChance);
-            Logger.logInfo(LOG_CHANCES, "MoveInProbabilityHelper.checkIfShouldMoveIn -- Total Chance Value: {0} -- Random Number: {1} -- result: {2}", chanceValue, randomValue, randomValue <= chanceValue);
+            Logger.LogInfo(Logger.LOG_CHANCES, "MoveInProbabilityHelper.checkIfShouldMoveIn -- Total Chance Value: {0} -- Random Number: {1} -- result: {2}", chanceValue, randomValue, randomValue <= chanceValue);
             return randomValue <= chanceValue;
         }
 
@@ -64,14 +62,14 @@ namespace CimCareMod.Managers
             {
                 float averageSeniorsAge = getAverageAgeOfSeniors(family);
                 chanceValue = ((averageSeniorsAge - (Citizen.AGE_LIMIT_ADULT - 15)) / SENIOR_AGE_RANGE) * AGE_MAX_CHANCE_VALUE;
-                Logger.logInfo(LOG_CHANCES, "MoveInProbabilityHelper.getSeniorsAgeChanceValue -- Age Chance Value: {0} -- Average Age: {1} -- ", chanceValue, averageSeniorsAge);
+                Logger.LogInfo(Logger.LOG_CHANCES, "MoveInProbabilityHelper.getSeniorsAgeChanceValue -- Age Chance Value: {0} -- Average Age: {1} -- ", chanceValue, averageSeniorsAge);
                 return Math.Min(chanceValue, AGE_MAX_CHANCE_VALUE);
             }
             else if (buildingData.Info.GetAI() is OrphanageAI)
             {
                 float averageChildrenAge = getAverageAgeOfChildren(family);
                 chanceValue = (averageChildrenAge / CHILD_AGE_RANGE) * AGE_MAX_CHANCE_VALUE;
-                Logger.logInfo(LOG_CHANCES, "MoveInProbabilityHelper.getChildernAgeChanceValue -- Age Chance Value: {0} -- Average Age: {1} -- ", chanceValue, averageChildrenAge);
+                Logger.LogInfo(Logger.LOG_CHANCES, "MoveInProbabilityHelper.getChildernAgeChanceValue -- Age Chance Value: {0} -- Average Age: {1} -- ", chanceValue, averageChildrenAge);
                 return Math.Min(chanceValue, AGE_MAX_CHANCE_VALUE);
             }
             return Math.Min(chanceValue, AGE_MAX_CHANCE_VALUE);
@@ -130,7 +128,7 @@ namespace CimCareMod.Managers
             if (homeBuilding == 0) 
             {
                 // homeBuilding should never be 0, but if it is return NO_CHANCE to prevent this family from being chosen 
-                Logger.logError(LOG_CHANCES, "MoveInProbabilityHelper.getDistanceChanceValue -- Home Building was 0 when it shouldn't have been");
+                Logger.LogError(Logger.LOG_CHANCES, "MoveInProbabilityHelper.getDistanceChanceValue -- Home Building was 0 when it shouldn't have been");
                 return NO_CHANCE;
             }
 
@@ -139,7 +137,7 @@ namespace CimCareMod.Managers
 
             // Calulate the chance modifier based on distance
             float distanceChanceValue = ((operationRadius - distance) / operationRadius) * DISTANCE_MAX_CHANCE_VALUE;
-            Logger.logInfo(LOG_CHANCES, "MoveInProbabilityHelper.getDistanceChanceValue -- Distance Chance Value: {0} -- Distance: {1}", distanceChanceValue, distance);
+            Logger.LogInfo(Logger.LOG_CHANCES, "MoveInProbabilityHelper.getDistanceChanceValue -- Distance Chance Value: {0} -- Distance: {1}", distanceChanceValue, distance);
 
             // Max negative value is -150
             return Mathf.Max(DISTANCE_MAX_CHANCE_VALUE * -2f, distanceChanceValue);
@@ -198,7 +196,7 @@ namespace CimCareMod.Managers
                 // Make sure not to leave children alone
                 if (hasChildren && !hasAdults) 
                 {
-                    Logger.logInfo(LOG_CHANCES, "MoveInProbabilityHelper.getFamilyStatusChanceValue -- Don't leave children alone");
+                    Logger.LogInfo(Logger.LOG_CHANCES, "MoveInProbabilityHelper.getFamilyStatusChanceValue -- Don't leave children alone");
                     return NO_CHANCE;
                 }
 
@@ -214,7 +212,7 @@ namespace CimCareMod.Managers
                     chance -= FAMILY_STATUS_MAX_CHANCE_VALUE * 0.25f;
                 }
 
-                Logger.logInfo(LOG_CHANCES, "MoveInProbabilityHelper.getFamilyStatusChanceValue -- Family Chance Value: {0} -- hasAdults: {1} -- hasChildren: {2}, -- numSeniors: {3}", chance, hasAdults, hasChildren, numSeniors);
+                Logger.LogInfo(Logger.LOG_CHANCES, "MoveInProbabilityHelper.getFamilyStatusChanceValue -- Family Chance Value: {0} -- hasAdults: {1} -- hasChildren: {2}, -- numSeniors: {3}", chance, hasAdults, hasChildren, numSeniors);
             }
             else if (buildingData.Info.GetAI() is OrphanageAI)
             {
@@ -263,7 +261,7 @@ namespace CimCareMod.Managers
                     chance -= FAMILY_STATUS_MAX_CHANCE_VALUE;
                 }
 
-                Logger.logInfo(LOG_CHANCES, "MoveInProbabilityHelper.getFamilyStatusChanceValue -- Family Chance Value: {0} -- hasAdults: {1} -- hasSeniors: {2}, -- numChildren: {3}", chance, hasAdults, hasSeniors, numChildren);
+                Logger.LogInfo(Logger.LOG_CHANCES, "MoveInProbabilityHelper.getFamilyStatusChanceValue -- Family Chance Value: {0} -- hasAdults: {1} -- hasSeniors: {2}, -- numChildren: {3}", chance, hasAdults, hasSeniors, numChildren);
             }
             return chance;
             
@@ -352,7 +350,7 @@ namespace CimCareMod.Managers
                     break;
             }
 
-            Logger.logInfo(LOG_CHANCES, "MoveInProbabilityHelper.getQualityLevelChanceValue -- Wealth Chance Value: {0} -- Family Wealth: {1} -- Building Quality: {2}", chance, wealth, quality);
+            Logger.LogInfo(Logger.LOG_CHANCES, "MoveInProbabilityHelper.getQualityLevelChanceValue -- Wealth Chance Value: {0} -- Family Wealth: {1} -- Building Quality: {2}", chance, wealth, quality);
             return chance;
         }
 
@@ -413,9 +411,9 @@ namespace CimCareMod.Managers
                 chance -= (((float) numWorkers.maxNumHighlyEducatedWorkers - (float) numWorkers.numHighlyEducatedWorkers) / (float) numWorkers.maxNumHighlyEducatedWorkers) * 0.15f * WORKER_MAX_CHANCE_VALUE;
             }
 
-            if (LOG_CHANCES) 
+            if (Logger.LOG_CHANCES) 
             {
-                Logger.logInfo(LOG_CHANCES, "MoveInProbabilityHelper.getQualityLevelChanceValue -- Worker Chance Value: {0} -- Missing Uneducated: {1} -- Missing Educated: {2} -- Missing Well Educated: {3} -- Missing Highly Educated: {4}", chance, (numWorkers.maxNumUneducatedWorkers - numWorkers.numUneducatedWorkers), (numWorkers.maxNumEducatedWorkers - numWorkers.numEducatedWorkers), (numWorkers.maxNumWellEducatedWorkers - numWorkers.numWellEducatedWorkers), (numWorkers.maxNumHighlyEducatedWorkers - numWorkers.numHighlyEducatedWorkers));
+                Logger.LogInfo(Logger.LOG_CHANCES, "MoveInProbabilityHelper.getQualityLevelChanceValue -- Worker Chance Value: {0} -- Missing Uneducated: {1} -- Missing Educated: {2} -- Missing Well Educated: {3} -- Missing Highly Educated: {4}", chance, (numWorkers.maxNumUneducatedWorkers - numWorkers.numUneducatedWorkers), (numWorkers.maxNumEducatedWorkers - numWorkers.numEducatedWorkers), (numWorkers.maxNumWellEducatedWorkers - numWorkers.numWellEducatedWorkers), (numWorkers.maxNumHighlyEducatedWorkers - numWorkers.numHighlyEducatedWorkers));
             }
             return chance;
         }

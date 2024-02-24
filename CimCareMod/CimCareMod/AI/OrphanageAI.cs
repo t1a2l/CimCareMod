@@ -12,9 +12,6 @@ namespace CimCareMod.AI
 {
     public class OrphanageAI : PlayerBuildingAI 
     {
-        private const bool LOG_PRODUCTION = false;
-        private const bool LOG_SIMULATION = false;
-
         private static readonly float[] QUALITY_VALUES = { 0, 10, 25, 50, 75, 125 };
 
         private Randomizer randomizer = new Randomizer(97);
@@ -340,7 +337,7 @@ namespace CimCareMod.AI
                 Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.ChildCare, behaviour.m_healthAccumulation, buildingData.m_position, radius);
                 Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Health, behaviour.m_healthAccumulation, buildingData.m_position, radius);
             }
-            Logger.logInfo(LOG_SIMULATION, "OrphanageAI.SimulationStepActive -- health: {0}", health);
+            Logger.LogInfo(Logger.LOG_SIMULATION, "OrphanageAI.SimulationStepActive -- health: {0}", health);
 
             // Get the Wellbeing
             int wellbeing = 0;
@@ -352,7 +349,7 @@ namespace CimCareMod.AI
                 }
                 Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Wellbeing, behaviour.m_wellbeingAccumulation, buildingData.m_position, radius);
             }
-            Logger.logInfo(LOG_SIMULATION, "OrphanageAI.SimulationStepActive -- wellbeing: {0}", wellbeing);
+            Logger.LogInfo(Logger.LOG_SIMULATION, "OrphanageAI.SimulationStepActive -- wellbeing: {0}", wellbeing);
 
             if (aliveCount != 0) 
             {
@@ -369,7 +366,7 @@ namespace CimCareMod.AI
             {
                 happiness -= happiness >> 2;
             }
-            Logger.logInfo(LOG_SIMULATION, "OrphanageAI.SimulationStepActive -- happiness: {0}", happiness);
+            Logger.LogInfo(Logger.LOG_SIMULATION, "OrphanageAI.SimulationStepActive -- happiness: {0}", happiness);
 
             buildingData.m_health = (byte) health;
             buildingData.m_happiness = (byte) happiness;
@@ -455,8 +452,8 @@ namespace CimCareMod.AI
                 return;
             }
 
-            Logger.logInfo(LOG_PRODUCTION, "------------------------------------------------------------");
-            Logger.logInfo(LOG_PRODUCTION, "OrphanageAI.ProduceGoods -- Family: {0}", string.Join(", ", Array.ConvertAll(familyWithChildren, item => item.ToString())));
+            Logger.LogInfo(Logger.LOG_PRODUCTION, "------------------------------------------------------------");
+            Logger.LogInfo(Logger.LOG_PRODUCTION, "OrphanageAI.ProduceGoods -- Family: {0}", string.Join(", ", Array.ConvertAll(familyWithChildren, item => item.ToString())));
 
             // Check move in chance
             NumWorkers numWorkers = getNumWorkers(ref behaviour);
@@ -470,7 +467,7 @@ namespace CimCareMod.AI
                 {
                     if (orphanageManager.isChild(familyMember))
                     {
-                        Logger.logInfo(LOG_PRODUCTION, "OrphanageAI.ProduceGoods -- familyMember: {0} is a child", familyMember);
+                        Logger.LogInfo(Logger.LOG_PRODUCTION, "OrphanageAI.ProduceGoods -- familyMember: {0} is a child", familyMember);
                         childrenList.Add(familyMember);
                     }
                 }
@@ -484,7 +481,7 @@ namespace CimCareMod.AI
                         return;
                     }
                     uint childId = childrenList[i];
-                    Logger.logInfo(LOG_PRODUCTION, "OrphanageAI.ProduceGoods -- Moving In: {0}", childId);
+                    Logger.LogInfo(Logger.LOG_PRODUCTION, "OrphanageAI.ProduceGoods -- Moving In: {0}", childId);
                     citizenManager.m_citizens.m_buffer[childId].SetHome(childId, buildingID, orphanageRoomId);
                     orphanageManager.doneProcessingChild(childId);
                 }
@@ -494,12 +491,12 @@ namespace CimCareMod.AI
             uint[] OrphanesRoomOrphans = orphanageManager.getOrphanesRoom();
             if (OrphanesRoomOrphans != null) 
             {
-                Logger.logInfo(LOG_PRODUCTION, "------------------------------------------------------------");
-                Logger.logInfo(LOG_PRODUCTION, "OrphanageAI.ProduceGoods -- OrphanesRoomOrphans: {0}", string.Join(", ", Array.ConvertAll(OrphanesRoomOrphans, item => item.ToString())));
+                Logger.LogInfo(Logger.LOG_PRODUCTION, "------------------------------------------------------------");
+                Logger.LogInfo(Logger.LOG_PRODUCTION, "OrphanageAI.ProduceGoods -- OrphanesRoomOrphans: {0}", string.Join(", ", Array.ConvertAll(OrphanesRoomOrphans, item => item.ToString())));
 
                 foreach (uint orphanId in OrphanesRoomOrphans)
                 {
-                    Logger.logInfo(LOG_PRODUCTION, "OrphanageAI.ProduceGoods -- Moving Out: {0}", orphanId);
+                    Logger.LogInfo(Logger.LOG_PRODUCTION, "OrphanageAI.ProduceGoods -- Moving Out: {0}", orphanId);
                     if(orphanId != 0)
                     {
                         citizenManager.m_citizens.m_buffer[orphanId].SetHome(orphanId, 0, 0);
@@ -591,7 +588,7 @@ namespace CimCareMod.AI
             }
             
             Singleton<EconomyManager>.instance.m_EconomyWrapper.OnGetMaintenanceCost(ref amount, this.m_info.m_class.m_service, this.m_info.m_class.m_subService, this.m_info.m_class.m_level);
-            Logger.logInfo(Logger.LOG_INCOME, "getCustomMaintenanceCost - building: {0} - calculated maintenance amount: {1}", buildingData.m_buildIndex, amount);
+            Logger.LogInfo(Logger.LOG_INCOME, "getCustomMaintenanceCost - building: {0} - calculated maintenance amount: {1}", buildingData.m_buildIndex, amount);
 
             return amount;
         }
@@ -608,7 +605,7 @@ namespace CimCareMod.AI
             int budget = Singleton<EconomyManager>.instance.GetBudget(this.m_info.m_class);
             amount = amount / 100;
             amount = productionRate * budget / 100 * amount / 100;
-            Logger.logInfo(Logger.LOG_INCOME, "getCustomMaintenanceCost - building: {0} - adjusted maintenance amount: {1}", buildingData.m_buildIndex, amount);
+            Logger.LogInfo(Logger.LOG_INCOME, "getCustomMaintenanceCost - building: {0} - adjusted maintenance amount: {1}", buildingData.m_buildIndex, amount);
 
             if ((buildingData.m_flags & Building.Flags.Original) == Building.Flags.None && amount != 0) 
             {
@@ -913,12 +910,12 @@ namespace CimCareMod.AI
 
         public void updateCapacity(float newCapacityModifier) 
         {
-            Logger.logInfo(Logger.LOG_OPTIONS, "OrphanageAI.updateCapacity -- Updating capacity with modifier: {0}", newCapacityModifier);
+            Logger.LogInfo(Logger.LOG_OPTIONS, "OrphanageAI.updateCapacity -- Updating capacity with modifier: {0}", newCapacityModifier);
             // Set the capcityModifier and check to see if the value actually changes
             if (Interlocked.Exchange(ref capacityModifier, newCapacityModifier) == newCapacityModifier) 
             {
                 // Capcity has already been set to this value, nothing to do
-                Logger.logInfo(Logger.LOG_OPTIONS, "OrphanageAI.updateCapacity -- Skipping capacity change because the value was already set");
+                Logger.LogInfo(Logger.LOG_OPTIONS, "OrphanageAI.updateCapacity -- Skipping capacity change because the value was already set");
                 return;
             }
         }
@@ -949,7 +946,7 @@ namespace CimCareMod.AI
                 citizenUnitIndex = nextCitizenUnitIndex;
             }
 
-            Logger.logInfo(Logger.LOG_CAPACITY_MANAGEMENT, "OrphanageAI.validateCapacity -- Checking Expected Capacity {0} vs Current Capacity {1} for Building {2}", numRoomsExpected, numRoomsFound, buildingId);
+            Logger.LogInfo(Logger.LOG_CAPACITY_MANAGEMENT, "OrphanageAI.validateCapacity -- Checking Expected Capacity {0} vs Current Capacity {1} for Building {2}", numRoomsExpected, numRoomsFound, buildingId);
             // Check to see if the correct amount of rooms are present, otherwise adjust accordingly
             if (numRoomsFound == numRoomsExpected) 
             {
@@ -971,7 +968,7 @@ namespace CimCareMod.AI
 
         private void createRooms(int numRoomsToCreate, ushort buildingId, ref Building data, uint lastCitizenUnitIndex) 
         {
-            Logger.logInfo(Logger.LOG_CAPACITY_MANAGEMENT, "OrphanageAI.createRooms -- Creating {0} Rooms", numRoomsToCreate);
+            Logger.LogInfo(Logger.LOG_CAPACITY_MANAGEMENT, "OrphanageAI.createRooms -- Creating {0} Rooms", numRoomsToCreate);
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
             citizenManager.CreateUnits(out uint firstUnit, ref Singleton<SimulationManager>.instance.m_randomizer, buildingId, 0, numRoomsToCreate, 0, 0, 0, 0);
             citizenManager.m_units.m_buffer[lastCitizenUnitIndex].m_nextUnit = firstUnit;
@@ -979,7 +976,7 @@ namespace CimCareMod.AI
 
         private void deleteRooms(int numRoomsToDelete, ushort buildingId, ref Building data) 
         {
-            Logger.logInfo(Logger.LOG_CAPACITY_MANAGEMENT, "OrphanageAI.deleteRooms -- Deleting {0} Rooms", numRoomsToDelete);
+            Logger.LogInfo(Logger.LOG_CAPACITY_MANAGEMENT, "OrphanageAI.deleteRooms -- Deleting {0} Rooms", numRoomsToDelete);
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
             
             // Always start with the second to avoid loss of pointer from the building to the first unit
@@ -1012,7 +1009,7 @@ namespace CimCareMod.AI
                 return;
             }
 
-            Logger.logInfo(Logger.LOG_CAPACITY_MANAGEMENT, "OrphanageAI.deleteRooms -- Deleting {0} Occupied Rooms", numRoomsToDelete);
+            Logger.LogInfo(Logger.LOG_CAPACITY_MANAGEMENT, "OrphanageAI.deleteRooms -- Deleting {0} Occupied Rooms", numRoomsToDelete);
             // Still need to delete more rooms so start deleting rooms with people in them...
             // Always start with the second to avoid loss of pointer from the building to the first unit
             prevUnit = data.m_citizenUnits;

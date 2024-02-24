@@ -10,8 +10,6 @@ namespace CimCareMod.Managers
 {
     public class OrphanageManager : ThreadingExtensionBase 
     {
-        private const bool LOG_CHILDREN = false;
-
         private const int DEFAULT_NUM_SEARCH_ATTEMPTS = 3;
 
         private static OrphanageManager instance;
@@ -34,7 +32,7 @@ namespace CimCareMod.Managers
 
         public OrphanageManager() 
         {
-            Logger.logInfo(LOG_CHILDREN, "OrphanageManager Created");
+            Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager Created");
             instance = this;
 
             this.randomizer = new Randomizer((uint) 73);
@@ -124,7 +122,7 @@ namespace CimCareMod.Managers
 
         public uint[] getFamilyWithChildren(int numAttempts) 
         {
-            Logger.logInfo(LOG_CHILDREN, "OrphanageManager.getFamilyWithChildren -- Start");
+            Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getFamilyWithChildren -- Start");
             // Lock to prevent refreshing while running, otherwise bail
             if (Interlocked.CompareExchange(ref this.running, 1, 0) == 1) 
             {
@@ -135,7 +133,7 @@ namespace CimCareMod.Managers
             uint[] family = this.getFamilyWithChildrenInternal(numAttempts);
             if (family == null) 
             {
-                Logger.logInfo(LOG_CHILDREN, "OrphanageManager.getFamilyWithChildren -- No Family");
+                Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getFamilyWithChildren -- No Family");
                 this.running = 0;
                 return null;
             }
@@ -149,14 +147,14 @@ namespace CimCareMod.Managers
                 }
             }
 
-            Logger.logInfo(LOG_CHILDREN, "OrphanageManager.getFamilyWithChildren -- Finished: {0}", string.Join(", ", Array.ConvertAll(family, item => item.ToString())));
+            Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getFamilyWithChildren -- Finished: {0}", string.Join(", ", Array.ConvertAll(family, item => item.ToString())));
             this.running = 0;
             return family;
         }
 
         public uint[] getOrphanesRoom(int numAttempts) 
         {
-            Logger.logInfo(LOG_CHILDREN, "OrphanageManager.getOrphanesRoom -- Start");
+            Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getOrphanesRoom -- Start");
             // Lock to prevent refreshing while running, otherwise bail
             if (Interlocked.CompareExchange(ref this.running, 1, 0) == 1) 
             {
@@ -167,7 +165,7 @@ namespace CimCareMod.Managers
             uint[] orphanage_room = this.getOrphanesRoomInternal(numAttempts);
             if (orphanage_room == null) 
             {
-                Logger.logInfo(LOG_CHILDREN, "OrphanageManager.getOrphanesRoomInternal -- No orphans in this room");
+                Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getOrphanesRoomInternal -- No orphans in this room");
                 this.running = 0;
                 return null;
             }
@@ -181,7 +179,7 @@ namespace CimCareMod.Managers
                 }
             }
 
-            Logger.logInfo(LOG_CHILDREN, "OrphanageManager.getOrphanesRoomInternal -- Finished: {0}", string.Join(", ", Array.ConvertAll(orphanage_room, item => item.ToString())));
+            Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getOrphanesRoomInternal -- Finished: {0}", string.Join(", ", Array.ConvertAll(orphanage_room, item => item.ToString())));
             this.running = 0;
             return orphanage_room;
         }
@@ -201,7 +199,7 @@ namespace CimCareMod.Managers
 
             // Get a random child
             uint familyId = this.fetchRandomFamilyWithChildren();
-            Logger.logInfo(LOG_CHILDREN, "OrphanageManager.getFamilyWithChildrenInternal -- Family Id: {0}", familyId);
+            Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getFamilyWithChildrenInternal -- Family Id: {0}", familyId);
             if (familyId == 0) 
             {
                 // No Family with Children to be located
@@ -225,7 +223,7 @@ namespace CimCareMod.Managers
                     }
                     childrenPresent = true;
                 }
-                Logger.logInfo(LOG_CHILDREN, "OrphanageManager.getFamilyWithChildrenInternal -- Family Member: {0}", familyMember);
+                Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getFamilyWithChildrenInternal -- Family Member: {0}", familyMember);
                 family[i] = familyMember;
             }
 
@@ -249,7 +247,7 @@ namespace CimCareMod.Managers
             // Get a random orphanage room
             uint orphanageRoomId = this.fetchRandomOrphanageRoom();  
 
-            Logger.logInfo(LOG_CHILDREN, "OrphanageManager.getOrphanesRoomInternal -- Family Id: {0}", orphanageRoomId);
+            Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getOrphanesRoomInternal -- Family Id: {0}", orphanageRoomId);
             if (orphanageRoomId == 0) 
             {
                 // No dorm apartment to be located
@@ -262,7 +260,7 @@ namespace CimCareMod.Managers
             for (int i = 0; i < 5; i++) 
             {
                 uint orphanId = orphanageRoom.GetCitizen(i);
-                Logger.logInfo(LOG_CHILDREN, "OrphanageManager.getOrphanesRoomInternal -- Family Member: {0}", orphanId);
+                Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getOrphanesRoomInternal -- Family Member: {0}", orphanId);
                 // not a child anymore -> move out
                 if(orphanId != 0 && !this.isChild(orphanId))
                 {
@@ -270,7 +268,7 @@ namespace CimCareMod.Managers
                         // This particular student is already being processed
                         return this.getOrphanesRoomInternal(--numAttempts);
                     }
-                    Logger.logInfo(LOG_CHILDREN, "OrphanageManager.getOrphanesRoomInternal -- Family Member: {0}, is not an orphan", orphanId);
+                    Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.getOrphanesRoomInternal -- Family Member: {0}, is not an orphan", orphanId);
                     orphanage_room[i] = orphanId;
                 } 
             }

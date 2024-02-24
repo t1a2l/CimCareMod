@@ -10,11 +10,11 @@ namespace CimCareMod.Utils
 {
     public class OptionsManager 
     {
-        private static readonly string[] CAPACITY_LABELS = new string[] { "Give Em Room (x0.5)", "Realistic (x1.0)", "Just a bit More (x1.5)", "Gameplay over Realism (x2.0)", "Who needs Living Space? (x2.5)", "Pack em like Sardines! (x3.0)" };
-        private static readonly float[] CAPACITY_VALUES = new float[] { 0.5f, 1.0f, 1.5f, 2.0f, 2.5f, 3.0f };
+        private static readonly string[] CAPACITY_LABELS = ["Give Em Room (x0.5)", "Realistic (x1.0)", "Just a bit More (x1.5)", "Gameplay over Realism (x2.0)", "Who needs Living Space? (x2.5)", "Pack em like Sardines! (x3.0)"];
+        private static readonly float[] CAPACITY_VALUES = [0.5f, 1.0f, 1.5f, 2.0f, 2.5f, 3.0f];
 
-        private static readonly string[] NURSING_HOMES_INCOME_LABELS = new string[] { "Communisim is Key (Full Maintenance)", "Seniors can Help a Little (Half Maintenance at Full Capacity)", "Make the Seniors Pay (No Maintenance at Full Capacity)", "Nursing Homes should be Profitable (Maintenance becomes Profit at Full Capacity)", "Twice the Pain, Twice the Gain (2x Maintenance, 2x Profit)", "Show me the Money! (Profit x2, Normal Maintenance)" };
-        private static readonly string[] ORPHANAGES_INCOME_LABELS = new string[] { "Communisim is Key (Full Maintenance)", "Orphans allowance (Half Maintenance at Full Capacity)", "Orphans will work on the street (No Maintenance at Full Capacity)", "Orphanages should be Profitable (Maintenance becomes Profit at Full Capacity)", "Twice the Pain, Twice the Gain (2x Maintenance, 2x Profit)", "Show me the Money! (Profit x2, Normal Maintenance)" };
+        private static readonly string[] NURSING_HOMES_INCOME_LABELS = ["Communisim is Key (Full Maintenance)", "Seniors can Help a Little (Half Maintenance at Full Capacity)", "Make the Seniors Pay (No Maintenance at Full Capacity)", "Nursing Homes should be Profitable (Maintenance becomes Profit at Full Capacity)", "Twice the Pain, Twice the Gain (2x Maintenance, 2x Profit)", "Show me the Money! (Profit x2, Normal Maintenance)"];
+        private static readonly string[] ORPHANAGES_INCOME_LABELS = ["Communisim is Key (Full Maintenance)", "Orphans allowance (Half Maintenance at Full Capacity)", "Orphans will work on the street (No Maintenance at Full Capacity)", "Orphanages should be Profitable (Maintenance becomes Profit at Full Capacity)", "Twice the Pain, Twice the Gain (2x Maintenance, 2x Profit)", "Show me the Money! (Profit x2, Normal Maintenance)"];
 
         public enum IncomeValues 
         {
@@ -39,7 +39,7 @@ namespace CimCareMod.Utils
 
         public void initialize(UIHelperBase helper) 
         {
-            Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.initialize -- Initializing Menu Options");
+            Logger.LogInfo(Logger.LOG_OPTIONS, "OptionsManager.initialize -- Initializing Menu Options");
             UIHelperBase group = helper.AddGroup("Cim Care Settings");
             this.nursingHomesCapacityDropDown = (UIDropDown) group.AddDropdown("Nursing Homes Capacity Modifier", CAPACITY_LABELS, 1, handleCapacityChange);
             this.nursingHomesIncomeDropDown = (UIDropDown) group.AddDropdown("Nursing Homes Income Modifier", NURSING_HOMES_INCOME_LABELS, 2, handleIncomeChange);
@@ -92,7 +92,7 @@ namespace CimCareMod.Utils
 
         public void updateNursingHomesCapacity(float targetValue) 
         {
-            Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.updateNursingHomesCapacity -- Updating capacity with modifier: {0}", targetValue);
+            Logger.LogInfo(Logger.LOG_OPTIONS, "OptionsManager.updateNursingHomesCapacity -- Updating capacity with modifier: {0}", targetValue);
             for (uint index = 0; PrefabCollection<BuildingInfo>.LoadedCount() > index; ++index) 
             {
                 BuildingInfo buildingInfo = PrefabCollection<BuildingInfo>.GetLoaded(index);
@@ -114,7 +114,7 @@ namespace CimCareMod.Utils
 
         public void updateOrphanagesCapacity(float targetValue) 
         {
-            Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.updateOrphanagesCapacity -- Updating capacity with modifier: {0}", targetValue);
+            Logger.LogInfo(Logger.LOG_OPTIONS, "OptionsManager.updateOrphanagesCapacity -- Updating capacity with modifier: {0}", targetValue);
             for (uint index = 0; PrefabCollection<BuildingInfo>.LoadedCount() > index; ++index) 
             {
                 BuildingInfo buildingInfo = PrefabCollection<BuildingInfo>.GetLoaded(index);
@@ -136,7 +136,7 @@ namespace CimCareMod.Utils
 
         private void saveOptions() 
         {
-            Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.saveOptions -- Saving Options");
+            Logger.LogInfo(Logger.LOG_OPTIONS, "OptionsManager.saveOptions -- Saving Options");
             Options options = new();
             options.nursingHomesCapacityModifierSelectedIndex = -1;
             options.orphanagesCapacityModifierSelectedIndex = -1;
@@ -147,7 +147,7 @@ namespace CimCareMod.Utils
                 options.nursingHomesCapacityModifierSelectedIndex = nursingHomesCapacitySelectedIndex;
                 if (nursingHomesCapacitySelectedIndex >= 0) 
                 {
-                    Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.saveOptions -- Nursing Homes Capacity Modifier Set to: {0}", CAPACITY_VALUES[nursingHomesCapacitySelectedIndex]);
+                    Logger.LogInfo(Logger.LOG_OPTIONS, "OptionsManager.saveOptions -- Nursing Homes Capacity Modifier Set to: {0}", CAPACITY_VALUES[nursingHomesCapacitySelectedIndex]);
                     this.nursingHomesCapacityModifier = CAPACITY_VALUES[nursingHomesCapacitySelectedIndex];
                     this.updateNursingHomesCapacity(CAPACITY_VALUES[nursingHomesCapacitySelectedIndex]);
                 }
@@ -159,7 +159,7 @@ namespace CimCareMod.Utils
                 options.nursingHomesIncomeModifierSelectedIndex = nursingHomesIncomeSelectedIndex;
                 if (nursingHomesIncomeSelectedIndex >= 0) 
                 {
-                    Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.saveOptions -- Nursing Homes Income Modifier Set to: {0}", (IncomeValues) nursingHomesIncomeSelectedIndex);
+                    Logger.LogInfo(Logger.LOG_OPTIONS, "OptionsManager.saveOptions -- Nursing Homes Income Modifier Set to: {0}", (IncomeValues) nursingHomesIncomeSelectedIndex);
                     this.nursingHomesIncomeValue = (IncomeValues) nursingHomesIncomeSelectedIndex;
                 }
             }
@@ -170,7 +170,7 @@ namespace CimCareMod.Utils
                 options.orphanagesCapacityModifierSelectedIndex = orphanagesCapacitySelectedIndex;
                 if (orphanagesCapacitySelectedIndex >= 0) 
                 {
-                    Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.saveOptions -- Orphanages Capacity Modifier Set to: {0}", CAPACITY_VALUES[orphanagesCapacitySelectedIndex]);
+                    Logger.LogInfo(Logger.LOG_OPTIONS, "OptionsManager.saveOptions -- Orphanages Capacity Modifier Set to: {0}", CAPACITY_VALUES[orphanagesCapacitySelectedIndex]);
                     this.orphanagesCapacityModifier = CAPACITY_VALUES[orphanagesCapacitySelectedIndex];
                     this.updateOrphanagesCapacity(CAPACITY_VALUES[orphanagesCapacitySelectedIndex]);
                 }
@@ -182,7 +182,7 @@ namespace CimCareMod.Utils
                 options.orphanagesIncomeModifierSelectedIndex = orphanagesIncomeSelectedIndex;
                 if (orphanagesIncomeSelectedIndex >= 0) 
                 {
-                    Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.saveOptions -- Orphanages Income Modifier Set to: {0}", (IncomeValues) orphanagesIncomeSelectedIndex);
+                    Logger.LogInfo(Logger.LOG_OPTIONS, "OptionsManager.saveOptions -- Orphanages Income Modifier Set to: {0}", (IncomeValues) orphanagesIncomeSelectedIndex);
                     this.orphanagesIncomeValue = (IncomeValues) orphanagesIncomeSelectedIndex;
                 }
             }
@@ -194,14 +194,14 @@ namespace CimCareMod.Utils
             } 
             catch (Exception e) 
             {
-                Logger.logError(Logger.LOG_OPTIONS, "Error saving options: {0} -- {1}", e.Message, e.StackTrace);
+                Logger.LogError(Logger.LOG_OPTIONS, "Error saving options: {0} -- {1}", e.Message, e.StackTrace);
             }
 
         }
 
         public void loadOptions() 
         {
-            Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.loadOptions -- Loading Options");
+            Logger.LogInfo(Logger.LOG_OPTIONS, "OptionsManager.loadOptions -- Loading Options");
             Options options = new();
 
             string old_file_path = "SeniorCitizenCenterMod.xml";
@@ -230,34 +230,34 @@ namespace CimCareMod.Utils
             } 
             catch (Exception e) 
             {
-                Logger.logError(Logger.LOG_OPTIONS, "Error loading options: {0} -- {1}", e.Message, e.StackTrace);
+                Logger.LogError(Logger.LOG_OPTIONS, "Error loading options: {0} -- {1}", e.Message, e.StackTrace);
                 return;
             }
 
             if (options.nursingHomesCapacityModifierSelectedIndex != -1) 
             {
-                Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.loadOptions -- Loading Nursing Homes Capacity Modifier to: x{0}", CAPACITY_VALUES[options.nursingHomesCapacityModifierSelectedIndex]);
+                Logger.LogInfo(Logger.LOG_OPTIONS, "OptionsManager.loadOptions -- Loading Nursing Homes Capacity Modifier to: x{0}", CAPACITY_VALUES[options.nursingHomesCapacityModifierSelectedIndex]);
                 this.nursingHomesCapacityDropDown.selectedIndex = options.nursingHomesCapacityModifierSelectedIndex;
                 this.nursingHomesCapacityModifier = CAPACITY_VALUES[options.nursingHomesCapacityModifierSelectedIndex];
             }
 
             if (options.nursingHomesIncomeModifierSelectedIndex > 0) 
             {
-                Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.loadOptions -- Loading Nursing Homes Income Modifier to: {0}", (IncomeValues) options.nursingHomesIncomeModifierSelectedIndex);
+                Logger.LogInfo(Logger.LOG_OPTIONS, "OptionsManager.loadOptions -- Loading Nursing Homes Income Modifier to: {0}", (IncomeValues) options.nursingHomesIncomeModifierSelectedIndex);
                 this.nursingHomesIncomeDropDown.selectedIndex = options.nursingHomesIncomeModifierSelectedIndex - 1;
                 this.nursingHomesIncomeValue = (IncomeValues) options.nursingHomesIncomeModifierSelectedIndex;
             }
 
             if (options.orphanagesCapacityModifierSelectedIndex != -1) 
             {
-                Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.loadOptions -- Loading Orphanages Capacity Modifier to: x{0}", CAPACITY_VALUES[options.orphanagesCapacityModifierSelectedIndex]);
+                Logger.LogInfo(Logger.LOG_OPTIONS, "OptionsManager.loadOptions -- Loading Orphanages Capacity Modifier to: x{0}", CAPACITY_VALUES[options.orphanagesCapacityModifierSelectedIndex]);
                 this.orphanagesCapacityDropDown.selectedIndex = options.orphanagesCapacityModifierSelectedIndex;
                 this.orphanagesCapacityModifier = CAPACITY_VALUES[options.orphanagesCapacityModifierSelectedIndex];
             }
 
             if (options.orphanagesIncomeModifierSelectedIndex > 0) 
             {
-                Logger.logInfo(Logger.LOG_OPTIONS, "OptionsManager.loadOptions -- Loading Orphanages Income Modifier to: {0}", (IncomeValues) options.orphanagesIncomeModifierSelectedIndex);
+                Logger.LogInfo(Logger.LOG_OPTIONS, "OptionsManager.loadOptions -- Loading Orphanages Income Modifier to: {0}", (IncomeValues) options.orphanagesIncomeModifierSelectedIndex);
                 this.orphanagesIncomeDropDown.selectedIndex = options.orphanagesIncomeModifierSelectedIndex - 1;
                 this.orphanagesIncomeValue = (IncomeValues) options.orphanagesIncomeModifierSelectedIndex;
             }

@@ -17,7 +17,7 @@ namespace CimCareMod.HarmonyPatches
                     __result = "CimCareMod.AI.NursingHomeAI, CimCareMod, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null";
                 }
             }
-		    Logger.logInfo(__result);
+		    Logger.LogInfo(__result);
 	    }
     }
 }

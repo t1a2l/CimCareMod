@@ -7,11 +7,11 @@ using System.Threading;
 using CimCareMod.Managers;
 using CimCareMod.Utils;
 
-namespace CimCareMod.AI {
+namespace CimCareMod.AI
+{
 
-    public class NursingHomeAI : PlayerBuildingAI {
-        private const bool LOG_PRODUCTION = false;
-        private const bool LOG_SIMULATION = false;
+    public class NursingHomeAI : PlayerBuildingAI
+    {
 
         private static readonly float[] QUALITY_VALUES = { 0, 10, 25, 50, 75, 125 };
 
@@ -39,73 +39,85 @@ namespace CimCareMod.AI {
         [CustomizableProperty("Quality (values: 1-5 including 1 and 5)")]
         public int quality = 3;
 
-	    public int m_healthCareAccumulation = 100;
+        public int m_healthCareAccumulation = 100;
 
         public int HealthCareAccumulation => UniqueFacultyAI.IncreaseByBonus(UniqueFacultyAI.FacultyBonus.Medicine, m_healthCareAccumulation);
 
-        public override Color GetColor(ushort buildingId, ref Building data, InfoManager.InfoMode infoMode, InfoManager.SubInfoMode subInfoMode) {
+        public override Color GetColor(ushort buildingId, ref Building data, InfoManager.InfoMode infoMode, InfoManager.SubInfoMode subInfoMode)
+        {
             // This is a copy from ResidentialBuildingAI
             InfoManager.InfoMode infoModeCopy = infoMode;
-            switch (infoModeCopy) {
+            switch (infoModeCopy)
+            {
                 case InfoManager.InfoMode.Health:
                     if (Singleton<InfoManager>.instance.CurrentSubMode == InfoManager.SubInfoMode.PipeWater)
-			        {
-				        if ((data.m_flags & Building.Flags.Active) != 0)
-				        {
-					        return Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int)infoMode].m_activeColor;
-				        }
-				        return Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int)infoMode].m_inactiveColor;
-			        }
-			        return base.GetColor(buildingId, ref data, infoMode, subInfoMode);
+                    {
+                        if ((data.m_flags & Building.Flags.Active) != 0)
+                        {
+                            return Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int)infoMode].m_activeColor;
+                        }
+                        return Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int)infoMode].m_inactiveColor;
+                    }
+                    return base.GetColor(buildingId, ref data, infoMode, subInfoMode);
                 case InfoManager.InfoMode.Density:
                     if (ShowConsumption(buildingId, ref data) && data.m_citizenCount != 0)
-			        {
-				        int seniors = data.m_seniors;
-				        if (seniors == 0)
-				        {
-					        return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
-				        }
-				        return Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int)infoMode].m_negativeColor;
-			        }
-			        return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
+                    {
+                        int seniors = data.m_seniors;
+                        if (seniors == 0)
+                        {
+                            return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
+                        }
+                        return Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int)infoMode].m_negativeColor;
+                    }
+                    return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
                 default:
-                    switch (infoModeCopy - 17) {
+                    switch (infoModeCopy - 17)
+                    {
                         case InfoManager.InfoMode.None:
-                            if (this.ShowConsumption(buildingId, ref data)) {
-                                return Color.Lerp(Singleton<InfoManager>.instance.m_properties.m_neutralColor, Color.Lerp(Singleton<ZoneManager>.instance.m_properties.m_zoneColors[2], Singleton<ZoneManager>.instance.m_properties.m_zoneColors[3], 0.5f) * 0.5f, (float) (0.200000002980232 + (double) Math.Max(0, this.quality - 1) * 0.200000002980232));
+                            if (this.ShowConsumption(buildingId, ref data))
+                            {
+                                return Color.Lerp(Singleton<InfoManager>.instance.m_properties.m_neutralColor, Color.Lerp(Singleton<ZoneManager>.instance.m_properties.m_zoneColors[2], Singleton<ZoneManager>.instance.m_properties.m_zoneColors[3], 0.5f) * 0.5f, (float)(0.200000002980232 + (double)Math.Max(0, this.quality - 1) * 0.200000002980232));
                             }
                             return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
                         case InfoManager.InfoMode.Water:
-                            if (!this.ShowConsumption(buildingId, ref data) || (int) data.m_citizenCount == 0)
+                            if (!this.ShowConsumption(buildingId, ref data) || (int)data.m_citizenCount == 0)
                                 return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
                             InfoManager.SubInfoMode currentSubMode = Singleton<InfoManager>.instance.CurrentSubMode;
                             int num4;
                             int num5;
-                            if (currentSubMode == InfoManager.SubInfoMode.Default) {
-                                num4 = (int) data.m_education1 * 100;
-                                num5 = (int) data.m_teens + (int) data.m_youngs + (int) data.m_adults + (int) data.m_seniors;
-                            } else if (currentSubMode == InfoManager.SubInfoMode.WaterPower) {
-                                num4 = (int) data.m_education2 * 100;
-                                num5 = (int) data.m_youngs + (int) data.m_adults + (int) data.m_seniors;
-                            } else {
-                                num4 = (int) data.m_education3 * 100;
-                                num5 = (int) data.m_youngs * 2 / 3 + (int) data.m_adults + (int) data.m_seniors;
+                            if (currentSubMode == InfoManager.SubInfoMode.Default)
+                            {
+                                num4 = (int)data.m_education1 * 100;
+                                num5 = (int)data.m_teens + (int)data.m_youngs + (int)data.m_adults + (int)data.m_seniors;
+                            }
+                            else if (currentSubMode == InfoManager.SubInfoMode.WaterPower)
+                            {
+                                num4 = (int)data.m_education2 * 100;
+                                num5 = (int)data.m_youngs + (int)data.m_adults + (int)data.m_seniors;
+                            }
+                            else
+                            {
+                                num4 = (int)data.m_education3 * 100;
+                                num5 = (int)data.m_youngs * 2 / 3 + (int)data.m_adults + (int)data.m_seniors;
                             }
                             if (num5 != 0)
                                 num4 = (num4 + (num5 >> 1)) / num5;
                             int num6 = Mathf.Clamp(num4, 0, 100);
-                            return Color.Lerp(Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int) infoMode].m_negativeColor, Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int) infoMode].m_targetColor, (float) num6 * 0.01f);
+                            return Color.Lerp(Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int)infoMode].m_negativeColor, Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int)infoMode].m_targetColor, (float)num6 * 0.01f);
                         default:
                             return this.handleOtherColors(buildingId, ref data, infoMode, subInfoMode);
                     }
             }
         }
 
-        private Color handleOtherColors(ushort buildingId, ref Building data, InfoManager.InfoMode infoMode, InfoManager.SubInfoMode subInfoMode) {
-            switch (infoMode) {
+        private Color handleOtherColors(ushort buildingId, ref Building data, InfoManager.InfoMode infoMode, InfoManager.SubInfoMode subInfoMode)
+        {
+            switch (infoMode)
+            {
                 case InfoManager.InfoMode.Happiness:
-                    if (ShowConsumption(buildingId, ref data)) {
-                        return Color.Lerp(Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int) infoMode].m_negativeColor, Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int) infoMode].m_targetColor, (float) Citizen.GetHappinessLevel((int) data.m_happiness) * 0.25f);
+                    if (ShowConsumption(buildingId, ref data))
+                    {
+                        return Color.Lerp(Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int)infoMode].m_negativeColor, Singleton<InfoManager>.instance.m_properties.m_modeProperties[(int)infoMode].m_targetColor, (float)Citizen.GetHappinessLevel((int)data.m_happiness) * 0.25f);
                     }
                     return Singleton<InfoManager>.instance.m_properties.m_neutralColor;
                 case InfoManager.InfoMode.Garbage:
@@ -118,136 +130,142 @@ namespace CimCareMod.AI {
         }
 
         public override void GetPlacementInfoMode(out InfoManager.InfoMode mode, out InfoManager.SubInfoMode subMode, float elevation)
-	    {
-		    mode = InfoManager.InfoMode.Health;
-		    subMode = InfoManager.SubInfoMode.PipeWater;
-	    }
+        {
+            mode = InfoManager.InfoMode.Health;
+            subMode = InfoManager.SubInfoMode.PipeWater;
+        }
 
         public override ImmaterialResourceManager.ResourceData[] GetImmaterialResourceRadius(ushort buildingID, ref Building data)
-	    {
-		    return new ImmaterialResourceManager.ResourceData[1]
-		    {
-			    new ImmaterialResourceManager.ResourceData
-			    {
-				    m_resource = ImmaterialResourceManager.Resource.ElderCare,
-				    m_radius = operationRadius
-			    }
-		    };
-	    }
+        {
+            return new ImmaterialResourceManager.ResourceData[1]
+            {
+                new ImmaterialResourceManager.ResourceData
+                {
+                    m_resource = ImmaterialResourceManager.Resource.ElderCare,
+                    m_radius = operationRadius
+                }
+            };
+        }
 
         public override void CreateBuilding(ushort buildingID, ref Building data)
-	    {
+        {
             // Ensure quality is within bounds
-            if (quality < 1) {
+            if (quality < 1)
+            {
                 quality = 1;
-            } else if (quality > 5) {
+            }
+            else if (quality > 5)
+            {
                 quality = 5;
             }
-		    base.CreateBuilding(buildingID, ref data);
-		    int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
-		    Singleton<CitizenManager>.instance.CreateUnits(out data.m_citizenUnits, ref Singleton<SimulationManager>.instance.m_randomizer, buildingID, 0, getModifiedCapacity(), workCount, 0, 0, 0);
+            base.CreateBuilding(buildingID, ref data);
+            int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
+            Singleton<CitizenManager>.instance.CreateUnits(out data.m_citizenUnits, ref Singleton<SimulationManager>.instance.m_randomizer, buildingID, 0, getModifiedCapacity(), workCount, 0, 0, 0);
         }
 
         public override void BuildingLoaded(ushort buildingID, ref Building data, uint version)
-	    {
-		    base.BuildingLoaded(buildingID, ref data, version);
-           
+        {
+            base.BuildingLoaded(buildingID, ref data, version);
+
             // Validate the capacity and adjust accordingly - but don't create new units, that will be done by EnsureCitizenUnits
             float capcityModifier = CimCareMod.getInstance().getOptionsManager().getNursingHomesCapacityModifier();
             this.updateCapacity(capcityModifier);
             this.validateCapacity(buildingID, ref data, false);
 
-		    int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
-		    EnsureCitizenUnits(buildingID, ref data, getModifiedCapacity(), workCount, 0, 0);
-	    }
+            int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
+            EnsureCitizenUnits(buildingID, ref data, getModifiedCapacity(), workCount, 0, 0);
+        }
 
         public override void EndRelocating(ushort buildingID, ref Building data)
-	    {
-		    base.EndRelocating(buildingID, ref data);
+        {
+            base.EndRelocating(buildingID, ref data);
 
             // Validate the capacity and adjust accordingly - but don't create new units, that will be done by EnsureCitizenUnits
             float capcityModifier = CimCareMod.getInstance().getOptionsManager().getNursingHomesCapacityModifier();
             this.updateCapacity(capcityModifier);
             this.validateCapacity(buildingID, ref data, false);
 
-		    int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
-		    EnsureCitizenUnits(buildingID, ref data, getModifiedCapacity(), workCount, 0, 0);
-	    }
+            int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
+            EnsureCitizenUnits(buildingID, ref data, getModifiedCapacity(), workCount, 0, 0);
+        }
 
-        protected override void ManualActivation(ushort buildingID, ref Building buildingData) 
+        protected override void ManualActivation(ushort buildingID, ref Building buildingData)
         {
             int elderCareAccumulation = HealthCareAccumulation;
-		    if (elderCareAccumulation != 0)
-		    {
-			    Vector3 position = buildingData.m_position;
-			    position.y += m_info.m_size.y;
+            if (elderCareAccumulation != 0)
+            {
+                Vector3 position = buildingData.m_position;
+                position.y += m_info.m_size.y;
                 Singleton<NotificationManager>.instance.AddEvent(NotificationEvent.Type.Happy, position, 1.5f);
                 Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.GainHappiness, ImmaterialResourceManager.Resource.DeathCare, QUALITY_VALUES[quality], operationRadius);
             }
         }
 
-        protected override void ManualDeactivation(ushort buildingID, ref Building buildingData) {
+        protected override void ManualDeactivation(ushort buildingID, ref Building buildingData)
+        {
             if ((buildingData.m_flags & Building.Flags.Collapsed) != 0)
-		    {
-			    Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.Happy, ImmaterialResourceManager.Resource.Abandonment, -buildingData.Width * buildingData.Length, 64f);
-			    return;
-		    }
-		    int elderCareAccumulation = HealthCareAccumulation;
-		    if (elderCareAccumulation != 0)
-		    {
-			    Vector3 position = buildingData.m_position;
-			    position.y += m_info.m_size.y;
+            {
+                Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.Happy, ImmaterialResourceManager.Resource.Abandonment, -buildingData.Width * buildingData.Length, 64f);
+                return;
+            }
+            int elderCareAccumulation = HealthCareAccumulation;
+            if (elderCareAccumulation != 0)
+            {
+                Vector3 position = buildingData.m_position;
+                position.y += m_info.m_size.y;
                 Singleton<NotificationManager>.instance.AddEvent(NotificationEvent.Type.Sad, position, 1.5f);
                 Singleton<NotificationManager>.instance.AddWaveEvent(buildingData.m_position, NotificationEvent.Type.LoseHappiness, ImmaterialResourceManager.Resource.DeathCare, -QUALITY_VALUES[quality], operationRadius);
-		    }
+            }
         }
 
         public override void PlacementSucceeded()
-	    {
-		    base.PlacementSucceeded();
-		    Singleton<BuildingManager>.instance.m_elderCareNotUsed?.Disable();
-	    }
-
-        public override void UpdateGuide(GuideController guideController)
-	    {
-		    Singleton<BuildingManager>.instance.m_elderCareNotUsed?.Activate(guideController.m_elderCareNotUsed, m_info);
-		    base.UpdateGuide(guideController);
-	    }
-
-        public override float GetCurrentRange(ushort buildingID, ref Building data)
-	    {
-		    int num = data.m_productionRate;
-		    if ((data.m_flags & (Building.Flags.Evacuating | Building.Flags.Active)) != Building.Flags.Active)
-		    {
-			    num = 0;
-		    }
-		    else if ((data.m_flags & Building.Flags.RateReduced) != 0)
-		    {
-			    num = Mathf.Min(num, 50);
-		    }
-		    int budget = Singleton<EconomyManager>.instance.GetBudget(m_info.m_class);
-		    num = PlayerBuildingAI.GetProductionRate(num, budget);
-		    return (float)num * operationRadius * 0.01f;
-	    }
-
-        protected override void HandleWorkAndVisitPlaces(ushort buildingID, ref Building buildingData, ref Citizen.BehaviourData behaviour, ref int aliveWorkerCount, ref int totalWorkerCount, ref int workPlaceCount, ref int aliveVisitorCount, ref int totalVisitorCount, ref int visitPlaceCount) {
-            workPlaceCount += numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
-		    GetWorkBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveWorkerCount, ref totalWorkerCount);
-		    HandleWorkPlaces(buildingID, ref buildingData, numUneducatedWorkers, numEducatedWorkers, numWellEducatedWorkers, numHighlyEducatedWorkers, ref behaviour, aliveWorkerCount, totalWorkerCount);
+        {
+            base.PlacementSucceeded();
+            Singleton<BuildingManager>.instance.m_elderCareNotUsed?.Disable();
         }
 
-        public override void SimulationStep(ushort buildingID, ref Building buildingData, ref Building.Frame frameData) {
+        public override void UpdateGuide(GuideController guideController)
+        {
+            Singleton<BuildingManager>.instance.m_elderCareNotUsed?.Activate(guideController.m_elderCareNotUsed, m_info);
+            base.UpdateGuide(guideController);
+        }
+
+        public override float GetCurrentRange(ushort buildingID, ref Building data)
+        {
+            int num = data.m_productionRate;
+            if ((data.m_flags & (Building.Flags.Evacuating | Building.Flags.Active)) != Building.Flags.Active)
+            {
+                num = 0;
+            }
+            else if ((data.m_flags & Building.Flags.RateReduced) != 0)
+            {
+                num = Mathf.Min(num, 50);
+            }
+            int budget = Singleton<EconomyManager>.instance.GetBudget(m_info.m_class);
+            num = PlayerBuildingAI.GetProductionRate(num, budget);
+            return (float)num * operationRadius * 0.01f;
+        }
+
+        protected override void HandleWorkAndVisitPlaces(ushort buildingID, ref Building buildingData, ref Citizen.BehaviourData behaviour, ref int aliveWorkerCount, ref int totalWorkerCount, ref int workPlaceCount, ref int aliveVisitorCount, ref int totalVisitorCount, ref int visitPlaceCount)
+        {
+            workPlaceCount += numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
+            GetWorkBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveWorkerCount, ref totalWorkerCount);
+            HandleWorkPlaces(buildingID, ref buildingData, numUneducatedWorkers, numEducatedWorkers, numWellEducatedWorkers, numHighlyEducatedWorkers, ref behaviour, aliveWorkerCount, totalWorkerCount);
+        }
+
+        public override void SimulationStep(ushort buildingID, ref Building buildingData, ref Building.Frame frameData)
+        {
             base.SimulationStep(buildingID, ref buildingData, ref frameData);
         }
 
-        protected  override void SimulationStepActive(ushort buildingID, ref Building buildingData, ref Building.Frame frameData)
-	    {
-			Citizen.BehaviourData behaviour = default(Citizen.BehaviourData);
-			int aliveCount = 0;
-			int totalCount = 0;
+        protected override void SimulationStepActive(ushort buildingID, ref Building buildingData, ref Building.Frame frameData)
+        {
+            Citizen.BehaviourData behaviour = default(Citizen.BehaviourData);
+            int aliveCount = 0;
+            int totalCount = 0;
             int homeCount = 0;
             int aliveWorkerCount = 0;
-	        int totalWorkerCount = 0;
+            int totalWorkerCount = 0;
             int aliveHomeCount = 0;
             int emptyHomeCount = 0;
 
@@ -256,20 +274,20 @@ namespace CimCareMod.AI {
 
             DistrictManager districtManager = Singleton<DistrictManager>.instance;
             byte district = districtManager.GetDistrict(buildingData.m_position);
-            DistrictPolicies.Services policies = districtManager.m_districts.m_buffer[(int) district].m_servicePolicies;
+            DistrictPolicies.Services policies = districtManager.m_districts.m_buffer[(int)district].m_servicePolicies;
 
-            DistrictPolicies.Taxation taxationPolicies = districtManager.m_districts.m_buffer[(int) district].m_taxationPolicies;
-            DistrictPolicies.CityPlanning cityPlanning = districtManager.m_districts.m_buffer[(int) district].m_cityPlanningPolicies;
-            DistrictPolicies.Special special = districtManager.m_districts.m_buffer[(int) district].m_specialPolicies;
+            DistrictPolicies.Taxation taxationPolicies = districtManager.m_districts.m_buffer[(int)district].m_taxationPolicies;
+            DistrictPolicies.CityPlanning cityPlanning = districtManager.m_districts.m_buffer[(int)district].m_cityPlanningPolicies;
+            DistrictPolicies.Special special = districtManager.m_districts.m_buffer[(int)district].m_specialPolicies;
 
-            districtManager.m_districts.m_buffer[(int) district].m_servicePoliciesEffect |= policies & (DistrictPolicies.Services.PowerSaving | DistrictPolicies.Services.WaterSaving | DistrictPolicies.Services.SmokeDetectors | DistrictPolicies.Services.PetBan | DistrictPolicies.Services.Recycling | DistrictPolicies.Services.SmokingBan | DistrictPolicies.Services.ExtraInsulation | DistrictPolicies.Services.NoElectricity | DistrictPolicies.Services.OnlyElectricity);
+            districtManager.m_districts.m_buffer[(int)district].m_servicePoliciesEffect |= policies & (DistrictPolicies.Services.PowerSaving | DistrictPolicies.Services.WaterSaving | DistrictPolicies.Services.SmokeDetectors | DistrictPolicies.Services.PetBan | DistrictPolicies.Services.Recycling | DistrictPolicies.Services.SmokingBan | DistrictPolicies.Services.ExtraInsulation | DistrictPolicies.Services.NoElectricity | DistrictPolicies.Services.OnlyElectricity);
 
             int electricityConsumption;
             int waterConsumption;
             int sewageAccumulation;
             int garbageAccumulation;
             int incomeAccumulation;
-            this.GetConsumptionRates(new Randomizer((int) buildingID), 100, out electricityConsumption, out waterConsumption, out sewageAccumulation, out garbageAccumulation, out incomeAccumulation);
+            this.GetConsumptionRates(new Randomizer((int)buildingID), 100, out electricityConsumption, out waterConsumption, out sewageAccumulation, out garbageAccumulation, out incomeAccumulation);
 
             int modifiedElectricityConsumption = 1 + (electricityConsumption * behaviour.m_electricityConsumption + 9999) / 10000;
             waterConsumption = 1 + (waterConsumption * behaviour.m_waterConsumption + 9999) / 10000;
@@ -279,29 +297,39 @@ namespace CimCareMod.AI {
 
             // Handle Heating
             int heatingConsumption = 0;
-            if (modifiedElectricityConsumption != 0 && districtManager.IsPolicyLoaded(DistrictPolicies.Policies.ExtraInsulation)) {
-                if ((policies & DistrictPolicies.Services.ExtraInsulation) != DistrictPolicies.Services.None) {
+            if (modifiedElectricityConsumption != 0 && districtManager.IsPolicyLoaded(DistrictPolicies.Policies.ExtraInsulation))
+            {
+                if ((policies & DistrictPolicies.Services.ExtraInsulation) != DistrictPolicies.Services.None)
+                {
                     heatingConsumption = Mathf.Max(1, modifiedElectricityConsumption * 3 + 8 >> 4);
-                } else
+                }
+                else
                     heatingConsumption = Mathf.Max(1, modifiedElectricityConsumption + 2 >> 2);
             }
 
             // Handle Recylcing and Pets
-            if (garbageAccumulation != 0) {
-                if ((policies & DistrictPolicies.Services.Recycling) != DistrictPolicies.Services.None) {
+            if (garbageAccumulation != 0)
+            {
+                if ((policies & DistrictPolicies.Services.Recycling) != DistrictPolicies.Services.None)
+                {
                     garbageAccumulation = (policies & DistrictPolicies.Services.PetBan) == DistrictPolicies.Services.None ? Mathf.Max(1, garbageAccumulation * 85 / 100) : Mathf.Max(1, garbageAccumulation * 7650 / 10000);
                     modifiedIncomeAccumulation = modifiedIncomeAccumulation * 95 / 100;
-                } else if ((policies & DistrictPolicies.Services.PetBan) != DistrictPolicies.Services.None) {
+                }
+                else if ((policies & DistrictPolicies.Services.PetBan) != DistrictPolicies.Services.None)
+                {
                     garbageAccumulation = Mathf.Max(1, garbageAccumulation * 90 / 100);
                 }
             }
 
-            if ((int) buildingData.m_fireIntensity == 0) {
+            if ((int)buildingData.m_fireIntensity == 0)
+            {
                 int maxMail = 100;
                 int mailAccumulation = 1;
                 int commonConsumptionValue = this.HandleCommonConsumption(buildingID, ref buildingData, ref frameData, ref modifiedElectricityConsumption, ref heatingConsumption, ref waterConsumption, ref modifiedSewageAccumulation, ref garbageAccumulation, ref mailAccumulation, maxMail, policies);
                 buildingData.m_flags |= Building.Flags.Active;
-            } else {
+            }
+            else
+            {
                 // Handle on fire
                 modifiedElectricityConsumption = 0;
                 heatingConsumption = 0;
@@ -315,106 +343,123 @@ namespace CimCareMod.AI {
 
             buildingData.m_customBuffer1 = (ushort)aliveCount;
             int health = 0;
-            float radius = (float) (buildingData.Width + buildingData.Length) * 2.5f;
-            if (behaviour.m_healthAccumulation != 0) {
-                if (aliveCount != 0) {
+            float radius = (float)(buildingData.Width + buildingData.Length) * 2.5f;
+            if (behaviour.m_healthAccumulation != 0)
+            {
+                if (aliveCount != 0)
+                {
                     health = (behaviour.m_healthAccumulation + (aliveCount >> 1)) / aliveCount;
                 }
                 Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.ElderCare, behaviour.m_healthAccumulation, buildingData.m_position, radius);
                 Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Health, behaviour.m_healthAccumulation, buildingData.m_position, radius);
             }
-            Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- health: {0}", health);
+            Logger.LogInfo(Logger.LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- health: {0}", health);
 
             // Get the Wellbeing
             int wellbeing = 0;
-            if (behaviour.m_wellbeingAccumulation != 0) {
-                if (aliveCount != 0) {
+            if (behaviour.m_wellbeingAccumulation != 0)
+            {
+                if (aliveCount != 0)
+                {
                     wellbeing = (behaviour.m_wellbeingAccumulation + (aliveCount >> 1)) / aliveCount;
                 }
                 Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Wellbeing, behaviour.m_wellbeingAccumulation, buildingData.m_position, radius);
             }
-            Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- wellbeing: {0}", wellbeing);
+            Logger.LogInfo(Logger.LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- wellbeing: {0}", wellbeing);
 
-            if (aliveCount != 0) {
+            if (aliveCount != 0)
+            {
                 Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Density, aliveCount, buildingData.m_position, radius);
             }
 
             // Calculate Happiness
             int happiness = Citizen.GetHappiness(health, wellbeing);
-            if ((buildingData.m_problems & Notification.Problem1.MajorProblem) != Notification.Problem1.None) {
+            if ((buildingData.m_problems & Notification.Problem1.MajorProblem) != Notification.Problem1.None)
+            {
                 happiness -= happiness >> 1;
-            } else if (buildingData.m_problems != Notification.Problem1.None) {
+            }
+            else if (buildingData.m_problems != Notification.Problem1.None)
+            {
                 happiness -= happiness >> 2;
             }
-            Logger.logInfo(LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- happiness: {0}", happiness);
+            Logger.LogInfo(Logger.LOG_SIMULATION, "NursingHomeAi.SimulationStepActive -- happiness: {0}", happiness);
 
-            buildingData.m_health = (byte) health;
-            buildingData.m_happiness = (byte) happiness;
-            buildingData.m_citizenCount = (byte) aliveCount;
-            buildingData.m_education1 = (byte) behaviour.m_education1Count;
-            buildingData.m_education2 = (byte) behaviour.m_education2Count;
-            buildingData.m_education3 = (byte) behaviour.m_education3Count;
-            buildingData.m_teens = (byte) behaviour.m_teenCount;
-            buildingData.m_youngs = (byte) behaviour.m_youngCount;
-            buildingData.m_adults = (byte) behaviour.m_adultCount;
-            buildingData.m_seniors = (byte) behaviour.m_seniorCount;
+            buildingData.m_health = (byte)health;
+            buildingData.m_happiness = (byte)happiness;
+            buildingData.m_citizenCount = (byte)aliveCount;
+            buildingData.m_education1 = (byte)behaviour.m_education1Count;
+            buildingData.m_education2 = (byte)behaviour.m_education2Count;
+            buildingData.m_education3 = (byte)behaviour.m_education3Count;
+            buildingData.m_teens = (byte)behaviour.m_teenCount;
+            buildingData.m_youngs = (byte)behaviour.m_youngCount;
+            buildingData.m_adults = (byte)behaviour.m_adultCount;
+            buildingData.m_seniors = (byte)behaviour.m_seniorCount;
 
             HandleSick(buildingID, ref buildingData, ref behaviour, totalWorkerCount + totalCount);
             HandleDead(buildingID, ref buildingData, ref behaviour, totalWorkerCount + totalCount);
 
             // Handle Crime and Fire Factors
             int crimeAccumulation = behaviour.m_crimeAccumulation / (3 * getModifiedCapacity());
-            if ((policies & DistrictPolicies.Services.RecreationalUse) != DistrictPolicies.Services.None) {
+            if ((policies & DistrictPolicies.Services.RecreationalUse) != DistrictPolicies.Services.None)
+            {
                 crimeAccumulation = crimeAccumulation * 3 + 3 >> 2;
             }
             this.HandleCrime(buildingID, ref buildingData, crimeAccumulation, aliveCount);
-            int crimeBuffer = (int) buildingData.m_crimeBuffer;
+            int crimeBuffer = (int)buildingData.m_crimeBuffer;
             int crimeRate;
-            if (aliveCount != 0) {
+            if (aliveCount != 0)
+            {
                 Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Density, aliveCount, buildingData.m_position, radius);
                 // num1
                 int fireFactor = (behaviour.m_educated0Count * 30 + behaviour.m_educated1Count * 15 + behaviour.m_educated2Count * 10) / aliveCount + 50;
-                if ((int) buildingData.m_crimeBuffer > aliveCount * 40) {
+                if ((int)buildingData.m_crimeBuffer > aliveCount * 40)
+                {
                     fireFactor += 30;
-                } else if ((int) buildingData.m_crimeBuffer > aliveCount * 15) {
+                }
+                else if ((int)buildingData.m_crimeBuffer > aliveCount * 15)
+                {
                     fireFactor += 15;
-                } else if ((int) buildingData.m_crimeBuffer > aliveCount * 5) {
+                }
+                else if ((int)buildingData.m_crimeBuffer > aliveCount * 5)
+                {
                     fireFactor += 10;
                 }
-                buildingData.m_fireHazard = (byte) fireFactor;
+                buildingData.m_fireHazard = (byte)fireFactor;
                 crimeRate = (crimeBuffer + (aliveCount >> 1)) / aliveCount;
-            } else {
-                buildingData.m_fireHazard = (byte) 0;
+            }
+            else
+            {
+                buildingData.m_fireHazard = (byte)0;
                 crimeRate = 0;
             }
 
-            districtManager.m_districts.m_buffer[(int) district].AddResidentialData(ref behaviour, aliveCount, health, happiness, crimeRate, homeCount, aliveHomeCount, emptyHomeCount, (int) this.m_info.m_class.m_level, modifiedElectricityConsumption, heatingConsumption, waterConsumption, modifiedSewageAccumulation, garbageAccumulation, modifiedIncomeAccumulation, Mathf.Min(100, (int) buildingData.m_garbageBuffer / 50), (int) buildingData.m_waterPollution * 100 / (int) byte.MaxValue, this.m_info.m_class.m_subService);
+            districtManager.m_districts.m_buffer[(int)district].AddResidentialData(ref behaviour, aliveCount, health, happiness, crimeRate, homeCount, aliveHomeCount, emptyHomeCount, (int)this.m_info.m_class.m_level, modifiedElectricityConsumption, heatingConsumption, waterConsumption, modifiedSewageAccumulation, garbageAccumulation, modifiedIncomeAccumulation, Mathf.Min(100, (int)buildingData.m_garbageBuffer / 50), (int)buildingData.m_waterPollution * 100 / (int)byte.MaxValue, this.m_info.m_class.m_subService);
 
             // Handle custom maintenance in addition to the standard maintenance handled in the base class
             handleAdditionalMaintenanceCost(ref buildingData);
-		    
+
             base.SimulationStepActive(buildingID, ref buildingData, ref frameData);
             HandleFire(buildingID, ref buildingData, ref frameData, policies);
-	    }
+        }
 
-        protected override void ProduceGoods(ushort buildingID, ref Building buildingData, ref Building.Frame frameData, int productionRate, int finalProductionRate, ref Citizen.BehaviourData behaviour, int aliveWorkerCount, int totalWorkerCount, int workPlaceCount, int aliveVisitorCount, int totalVisitorCount, int visitPlaceCount) 
+        protected override void ProduceGoods(ushort buildingID, ref Building buildingData, ref Building.Frame frameData, int productionRate, int finalProductionRate, ref Citizen.BehaviourData behaviour, int aliveWorkerCount, int totalWorkerCount, int workPlaceCount, int aliveVisitorCount, int totalVisitorCount, int visitPlaceCount)
         {
-            base.ProduceGoods(buildingID, ref buildingData, ref frameData, productionRate, finalProductionRate, ref behaviour, aliveWorkerCount, totalWorkerCount, workPlaceCount, aliveVisitorCount, totalVisitorCount, visitPlaceCount);    
+            base.ProduceGoods(buildingID, ref buildingData, ref frameData, productionRate, finalProductionRate, ref behaviour, aliveWorkerCount, totalWorkerCount, workPlaceCount, aliveVisitorCount, totalVisitorCount, visitPlaceCount);
             if (finalProductionRate == 0)
-		    {
-			    return;
-		    }
+            {
+                return;
+            }
             getOccupancyDetails(ref buildingData, out int numResidents, out int numRoomsOccupied);
 
             // Make sure there are no problems
-            if ((buildingData.m_problems & (Notification.Problem1.MajorProblem | Notification.Problem1.Electricity | Notification.Problem1.ElectricityNotConnected | Notification.Problem1.Fire | Notification.Problem1.NoWorkers | Notification.Problem1.Water | Notification.Problem1.WaterNotConnected | Notification.Problem1.RoadNotConnected | Notification.Problem1.TurnedOff)) != Notification.Problem1.None) 
+            if ((buildingData.m_problems & (Notification.Problem1.MajorProblem | Notification.Problem1.Electricity | Notification.Problem1.ElectricityNotConnected | Notification.Problem1.Fire | Notification.Problem1.NoWorkers | Notification.Problem1.Water | Notification.Problem1.WaterNotConnected | Notification.Problem1.RoadNotConnected | Notification.Problem1.TurnedOff)) != Notification.Problem1.None)
             {
                 return;
             }
 
             // Make sure there are empty rooms available
             uint emptyRoom = getEmptyCitizenUnit(ref buildingData);
-            if (emptyRoom == 0) 
+            if (emptyRoom == 0)
             {
                 return;
             }
@@ -422,13 +467,14 @@ namespace CimCareMod.AI {
             // Fetch a Senior Citizen
             NursingHomeManager nursingHomeManager = NursingHomeManager.getInstance();
             uint[] familyWithSeniors = nursingHomeManager.getFamilyWithSenior();
-            if (familyWithSeniors == null) {
+            if (familyWithSeniors == null)
+            {
                 // No Family Located
                 return;
             }
 
-            Logger.logInfo(LOG_PRODUCTION, "------------------------------------------------------------");
-            Logger.logInfo(LOG_PRODUCTION, "NursingHomeAi.ProduceGoods -- Family: {0}", string.Join(", ", Array.ConvertAll(familyWithSeniors, item => item.ToString())));
+            Logger.LogInfo(Logger.LOG_PRODUCTION, "------------------------------------------------------------");
+            Logger.LogInfo(Logger.LOG_PRODUCTION, "NursingHomeAi.ProduceGoods -- Family: {0}", string.Join(", ", Array.ConvertAll(familyWithSeniors, item => item.ToString())));
 
             // Check move in chance
             NumWorkers numWorkers = getNumWorkers(ref behaviour);
@@ -436,13 +482,13 @@ namespace CimCareMod.AI {
 
             // Process the seniors and move them in if able to, mark the seniors as done processing regardless
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
-            foreach (uint familyMember in familyWithSeniors) 
+            foreach (uint familyMember in familyWithSeniors)
             {
-                if (nursingHomeManager.isSenior(familyMember)) 
+                if (nursingHomeManager.isSenior(familyMember))
                 {
-                    if (shouldMoveIn) 
+                    if (shouldMoveIn)
                     {
-                        Logger.logInfo(LOG_PRODUCTION, "NursingHomeAi.ProduceGoods -- Moving In: {0}", familyMember);
+                        Logger.LogInfo(Logger.LOG_PRODUCTION, "NursingHomeAi.ProduceGoods -- Moving In: {0}", familyMember);
                         citizenManager.m_citizens.m_buffer[familyMember].SetHome(familyMember, buildingID, emptyRoom);
                     }
                     nursingHomeManager.doneProcessingSenior(familyMember);
@@ -451,11 +497,11 @@ namespace CimCareMod.AI {
         }
 
         public override string GetLocalizedTooltip()
-	    {
-		    return LocaleFormatter.FormatGeneric("AIINFO_WATER_CONSUMPTION", GetWaterConsumption() * 16) + Environment.NewLine + LocaleFormatter.FormatGeneric("AIINFO_ELECTRICITY_CONSUMPTION", GetElectricityConsumption() * 16);
-	    }
+        {
+            return LocaleFormatter.FormatGeneric("AIINFO_WATER_CONSUMPTION", GetWaterConsumption() * 16) + Environment.NewLine + LocaleFormatter.FormatGeneric("AIINFO_ELECTRICITY_CONSUMPTION", GetElectricityConsumption() * 16);
+        }
 
-        public override string GetLocalizedStats(ushort buildingID, ref Building data) 
+        public override string GetLocalizedStats(ushort buildingID, ref Building data)
         {
             getOccupancyDetails(ref data, out int numResidents, out int numRoomsOccupied);
             // Get Worker Data
@@ -463,7 +509,7 @@ namespace CimCareMod.AI {
             int aliveWorkerCount = 0;
             int totalWorkerCount = 0;
             GetWorkBehaviour(buildingID, ref data, ref workerBehaviourData, ref aliveWorkerCount, ref totalWorkerCount);
-            
+
             // Build Stats
             // TODO: Localize!!!
             StringBuilder stringBuilder = new StringBuilder();
@@ -484,28 +530,28 @@ namespace CimCareMod.AI {
             return stringBuilder.ToString();
         }
 
-        private int getCustomMaintenanceCost(ref Building buildingData) 
+        private int getCustomMaintenanceCost(ref Building buildingData)
         {
             int originalAmount = -(this.m_maintenanceCost * 100);
 
             CimCareMod mod = CimCareMod.getInstance();
-            if (mod == null) 
+            if (mod == null)
             {
                 return 0;
             }
 
             OptionsManager optionsManager = mod.getOptionsManager();
-            if (optionsManager == null) 
+            if (optionsManager == null)
             {
                 return 0;
             }
 
             getOccupancyDetails(ref buildingData, out int numResidents, out int numRoomsOccupied);
-            float capacityModifier = (float) numRoomsOccupied / (float) getModifiedCapacity();
-            int modifiedAmount = (int) ((float) originalAmount * capacityModifier);
+            float capacityModifier = (float)numRoomsOccupied / (float)getModifiedCapacity();
+            int modifiedAmount = (int)((float)originalAmount * capacityModifier);
 
             int amount = 0;
-            switch (optionsManager.getNursingHomesIncomeModifier()) 
+            switch (optionsManager.getNursingHomesIncomeModifier())
             {
                 case OptionsManager.IncomeValues.FULL_MAINTENANCE:
                     return 0;
@@ -526,48 +572,48 @@ namespace CimCareMod.AI {
                     break;
             }
 
-            if(amount == 0) 
+            if (amount == 0)
             {
                 return 0;
             }
-            
+
             Singleton<EconomyManager>.instance.m_EconomyWrapper.OnGetMaintenanceCost(ref amount, this.m_info.m_class.m_service, this.m_info.m_class.m_subService, this.m_info.m_class.m_level);
-            Logger.logInfo(Logger.LOG_INCOME, "getCustomMaintenanceCost - building: {0} - calculated maintenance amount: {1}", buildingData.m_buildIndex, amount);
+            Logger.LogInfo(Logger.LOG_INCOME, "getCustomMaintenanceCost - building: {0} - calculated maintenance amount: {1}", buildingData.m_buildIndex, amount);
 
             return amount;
         }
 
-        public void handleAdditionalMaintenanceCost(ref Building buildingData) 
+        public void handleAdditionalMaintenanceCost(ref Building buildingData)
         {
             int amount = getCustomMaintenanceCost(ref buildingData);
-            if (amount == 0) 
+            if (amount == 0)
             {
                 return;
             }
 
-            int productionRate = (int) buildingData.m_productionRate;
+            int productionRate = (int)buildingData.m_productionRate;
             int budget = Singleton<EconomyManager>.instance.GetBudget(this.m_info.m_class);
             amount = amount / 100;
             amount = productionRate * budget / 100 * amount / 100;
-            Logger.logInfo(Logger.LOG_INCOME, "getCustomMaintenanceCost - building: {0} - adjusted maintenance amount: {1}", buildingData.m_buildIndex, amount);
+            Logger.LogInfo(Logger.LOG_INCOME, "getCustomMaintenanceCost - building: {0} - adjusted maintenance amount: {1}", buildingData.m_buildIndex, amount);
 
-            if ((buildingData.m_flags & Building.Flags.Original) == Building.Flags.None && amount != 0) 
+            if ((buildingData.m_flags & Building.Flags.Original) == Building.Flags.None && amount != 0)
             {
                 int result = Singleton<EconomyManager>.instance.FetchResource(EconomyManager.Resource.Maintenance, amount, this.m_info.m_class);
             }
         }
-  
-        private uint getEmptyCitizenUnit(ref Building data) 
+
+        private uint getEmptyCitizenUnit(ref Building data)
         {
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
             uint citizenUnitIndex = data.m_citizenUnits;
 
-            while ((int) citizenUnitIndex != 0) 
+            while ((int)citizenUnitIndex != 0)
             {
                 uint nextCitizenUnitIndex = citizenManager.m_units.m_buffer[citizenUnitIndex].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None) 
+                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
                 {
-                    if (citizenManager.m_units.m_buffer[citizenUnitIndex].Empty()) 
+                    if (citizenManager.m_units.m_buffer[citizenUnitIndex].Empty())
                     {
                         return citizenUnitIndex;
                     }
@@ -578,7 +624,7 @@ namespace CimCareMod.AI {
             return 0;
         }
 
-        private NumWorkers getNumWorkers(ref Citizen.BehaviourData workerBehaviourData) 
+        private NumWorkers getNumWorkers(ref Citizen.BehaviourData workerBehaviourData)
         {
             NumWorkers numWorkers = new()
             {
@@ -594,7 +640,7 @@ namespace CimCareMod.AI {
             return numWorkers;
         }
 
-        private int GetAverageResidentRequirement(ushort buildingID, ref Building data, ImmaterialResourceManager.Resource resource) 
+        private int GetAverageResidentRequirement(ushort buildingID, ref Building data, ImmaterialResourceManager.Resource resource)
         {
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
             uint citizenUnit = data.m_citizenUnits;
@@ -602,35 +648,35 @@ namespace CimCareMod.AI {
             int counter = 0;
             int requirement1 = 0;
             int requirement2 = 0;
-            while ((int) citizenUnit != 0) 
+            while ((int)citizenUnit != 0)
             {
                 uint num5 = citizenManager.m_units.m_buffer[citizenUnit].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnit].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None) 
+                if ((citizenManager.m_units.m_buffer[citizenUnit].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
                 {
                     int residentRequirement1 = 0;
                     int residentRequirement2 = 0;
-                    for (int index = 0; index < 5; ++index) 
+                    for (int index = 0; index < 5; ++index)
                     {
                         uint citizen = citizenManager.m_units.m_buffer[citizenUnit].GetCitizen(index);
-                        if ((int) citizen != 0 && !citizenManager.m_citizens.m_buffer[citizen].Dead) 
+                        if ((int)citizen != 0 && !citizenManager.m_citizens.m_buffer[citizen].Dead)
                         {
                             residentRequirement1 += GetResidentRequirement(resource, ref citizenManager.m_citizens.m_buffer[citizen]);
                             ++residentRequirement2;
                         }
                     }
-                    if (residentRequirement2 == 0) 
+                    if (residentRequirement2 == 0)
                     {
                         requirement1 += 100;
                         ++requirement2;
-                    } 
-                    else 
+                    }
+                    else
                     {
                         requirement1 += residentRequirement1;
                         requirement2 += residentRequirement2;
                     }
                 }
                 citizenUnit = num5;
-                if (++counter > numCitizenUnits) 
+                if (++counter > numCitizenUnits)
                 {
                     CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + System.Environment.StackTrace);
                     break;
@@ -641,9 +687,9 @@ namespace CimCareMod.AI {
             return 0;
         }
 
-        private int GetResidentRequirement(ImmaterialResourceManager.Resource resource, ref Citizen citizen) 
+        private int GetResidentRequirement(ImmaterialResourceManager.Resource resource, ref Citizen citizen)
         {
-            switch (resource) 
+            switch (resource)
             {
                 case ImmaterialResourceManager.Resource.HealthCare:
                     return Citizen.GetHealthCareRequirement(Citizen.GetAgePhase(citizen.EducationLevel, citizen.Age));
@@ -677,30 +723,30 @@ namespace CimCareMod.AI {
             }
         }
 
-        public override float GetEventImpact(ushort buildingID, ref Building data, ImmaterialResourceManager.Resource resource, float amount) 
+        public override float GetEventImpact(ushort buildingID, ref Building data, ImmaterialResourceManager.Resource resource, float amount)
         {
             if ((data.m_flags & (Building.Flags.Abandoned | Building.Flags.BurnedDown)) != Building.Flags.None)
                 return 0.0f;
-            switch (resource) 
+            switch (resource)
             {
                 case ImmaterialResourceManager.Resource.HealthCare:
                     int residentRequirement1 = GetAverageResidentRequirement(buildingID, ref data, resource);
                     int local1;
                     Singleton<ImmaterialResourceManager>.instance.CheckLocalResource(resource, data.m_position, out local1);
                     int num1 = ImmaterialResourceManager.CalculateResourceEffect(local1, residentRequirement1, 500, 20, 40);
-                    return Mathf.Clamp((float) (ImmaterialResourceManager.CalculateResourceEffect(local1 + Mathf.RoundToInt(amount), residentRequirement1, 500, 20, 40) - num1) / 20f, -1f, 1f);
+                    return Mathf.Clamp((float)(ImmaterialResourceManager.CalculateResourceEffect(local1 + Mathf.RoundToInt(amount), residentRequirement1, 500, 20, 40) - num1) / 20f, -1f, 1f);
                 case ImmaterialResourceManager.Resource.FireDepartment:
                     int residentRequirement2 = GetAverageResidentRequirement(buildingID, ref data, resource);
                     int local2;
                     Singleton<ImmaterialResourceManager>.instance.CheckLocalResource(resource, data.m_position, out local2);
                     int num2 = ImmaterialResourceManager.CalculateResourceEffect(local2, residentRequirement2, 500, 20, 40);
-                    return Mathf.Clamp((float) (ImmaterialResourceManager.CalculateResourceEffect(local2 + Mathf.RoundToInt(amount), residentRequirement2, 500, 20, 40) - num2) / 20f, -1f, 1f);
+                    return Mathf.Clamp((float)(ImmaterialResourceManager.CalculateResourceEffect(local2 + Mathf.RoundToInt(amount), residentRequirement2, 500, 20, 40) - num2) / 20f, -1f, 1f);
                 case ImmaterialResourceManager.Resource.PoliceDepartment:
                     int residentRequirement3 = GetAverageResidentRequirement(buildingID, ref data, resource);
                     int local3;
                     Singleton<ImmaterialResourceManager>.instance.CheckLocalResource(resource, data.m_position, out local3);
                     int num3 = ImmaterialResourceManager.CalculateResourceEffect(local3, residentRequirement3, 500, 20, 40);
-                    return Mathf.Clamp((float) (ImmaterialResourceManager.CalculateResourceEffect(local3 + Mathf.RoundToInt(amount), residentRequirement3, 500, 20, 40) - num3) / 20f, -1f, 1f);
+                    return Mathf.Clamp((float)(ImmaterialResourceManager.CalculateResourceEffect(local3 + Mathf.RoundToInt(amount), residentRequirement3, 500, 20, 40) - num3) / 20f, -1f, 1f);
                 case ImmaterialResourceManager.Resource.EducationElementary:
                 case ImmaterialResourceManager.Resource.EducationHighSchool:
                 case ImmaterialResourceManager.Resource.EducationUniversity:
@@ -708,40 +754,40 @@ namespace CimCareMod.AI {
                     int local4;
                     Singleton<ImmaterialResourceManager>.instance.CheckLocalResource(resource, data.m_position, out local4);
                     int num4 = ImmaterialResourceManager.CalculateResourceEffect(local4, residentRequirement4, 500, 20, 40);
-                    return Mathf.Clamp((float) (ImmaterialResourceManager.CalculateResourceEffect(local4 + Mathf.RoundToInt(amount), residentRequirement4, 500, 20, 40) - num4) / 20f, -1f, 1f);
+                    return Mathf.Clamp((float)(ImmaterialResourceManager.CalculateResourceEffect(local4 + Mathf.RoundToInt(amount), residentRequirement4, 500, 20, 40) - num4) / 20f, -1f, 1f);
                 case ImmaterialResourceManager.Resource.DeathCare:
                     int residentRequirement5 = GetAverageResidentRequirement(buildingID, ref data, resource);
                     int local5;
                     Singleton<ImmaterialResourceManager>.instance.CheckLocalResource(resource, data.m_position, out local5);
                     int num5 = ImmaterialResourceManager.CalculateResourceEffect(local5, residentRequirement5, 500, 10, 20);
-                    return Mathf.Clamp((float) (ImmaterialResourceManager.CalculateResourceEffect(local5 + Mathf.RoundToInt(amount), residentRequirement5, 500, 10, 20) - num5) / 20f, -1f, 1f);
+                    return Mathf.Clamp((float)(ImmaterialResourceManager.CalculateResourceEffect(local5 + Mathf.RoundToInt(amount), residentRequirement5, 500, 10, 20) - num5) / 20f, -1f, 1f);
                 case ImmaterialResourceManager.Resource.PublicTransport:
                     int residentRequirement6 = GetAverageResidentRequirement(buildingID, ref data, resource);
                     int local6;
                     Singleton<ImmaterialResourceManager>.instance.CheckLocalResource(resource, data.m_position, out local6);
                     int num6 = ImmaterialResourceManager.CalculateResourceEffect(local6, residentRequirement6, 500, 20, 40);
-                    return Mathf.Clamp((float) (ImmaterialResourceManager.CalculateResourceEffect(local6 + Mathf.RoundToInt(amount), residentRequirement6, 500, 20, 40) - num6) / 20f, -1f, 1f);
+                    return Mathf.Clamp((float)(ImmaterialResourceManager.CalculateResourceEffect(local6 + Mathf.RoundToInt(amount), residentRequirement6, 500, 20, 40) - num6) / 20f, -1f, 1f);
                 case ImmaterialResourceManager.Resource.NoisePollution:
                     int local7;
                     Singleton<ImmaterialResourceManager>.instance.CheckLocalResource(resource, data.m_position, out local7);
-                    int num7 = local7 * 100 / (int) byte.MaxValue;
-                    return Mathf.Clamp((float) (Mathf.Clamp(local7 + Mathf.RoundToInt(amount), 0, (int) byte.MaxValue) * 100 / (int) byte.MaxValue - num7) / 50f, -1f, 1f);
+                    int num7 = local7 * 100 / (int)byte.MaxValue;
+                    return Mathf.Clamp((float)(Mathf.Clamp(local7 + Mathf.RoundToInt(amount), 0, (int)byte.MaxValue) * 100 / (int)byte.MaxValue - num7) / 50f, -1f, 1f);
                 case ImmaterialResourceManager.Resource.Entertainment:
                     int residentRequirement7 = GetAverageResidentRequirement(buildingID, ref data, resource);
                     int local8;
                     Singleton<ImmaterialResourceManager>.instance.CheckLocalResource(resource, data.m_position, out local8);
                     int num8 = ImmaterialResourceManager.CalculateResourceEffect(local8, residentRequirement7, 500, 30, 60);
-                    return Mathf.Clamp((float) (ImmaterialResourceManager.CalculateResourceEffect(local8 + Mathf.RoundToInt(amount), residentRequirement7, 500, 30, 60) - num8) / 30f, -1f, 1f);
+                    return Mathf.Clamp((float)(ImmaterialResourceManager.CalculateResourceEffect(local8 + Mathf.RoundToInt(amount), residentRequirement7, 500, 30, 60) - num8) / 30f, -1f, 1f);
                 case ImmaterialResourceManager.Resource.Abandonment:
                     int local9;
                     Singleton<ImmaterialResourceManager>.instance.CheckLocalResource(resource, data.m_position, out local9);
                     int num9 = ImmaterialResourceManager.CalculateResourceEffect(local9, 15, 50, 10, 20);
-                    return Mathf.Clamp((float) (ImmaterialResourceManager.CalculateResourceEffect(local9 + Mathf.RoundToInt(amount), 15, 50, 10, 20) - num9) / 50f, -1f, 1f);
+                    return Mathf.Clamp((float)(ImmaterialResourceManager.CalculateResourceEffect(local9 + Mathf.RoundToInt(amount), 15, 50, 10, 20) - num9) / 50f, -1f, 1f);
                 default:
                     return 0f;
             }
         }
-        public override float GetEventImpact(ushort buildingID, ref Building data, NaturalResourceManager.Resource resource, float amount) 
+        public override float GetEventImpact(ushort buildingID, ref Building data, NaturalResourceManager.Resource resource, float amount)
         {
             if ((data.m_flags & (Building.Flags.Abandoned | Building.Flags.BurnedDown)) != Building.Flags.None)
                 return 0.0f;
@@ -749,18 +795,18 @@ namespace CimCareMod.AI {
                 return 0f;
             byte groundPollution;
             Singleton<NaturalResourceManager>.instance.CheckPollution(data.m_position, out groundPollution);
-            int num = (int) groundPollution * 100 / (int) byte.MaxValue;
-            return Mathf.Clamp((float) (Mathf.Clamp((int) groundPollution + Mathf.RoundToInt(amount), 0, (int) byte.MaxValue) * 100 / (int) byte.MaxValue - num) / 50f, -1f, 1f);
+            int num = (int)groundPollution * 100 / (int)byte.MaxValue;
+            return Mathf.Clamp((float)(Mathf.Clamp((int)groundPollution + Mathf.RoundToInt(amount), 0, (int)byte.MaxValue) * 100 / (int)byte.MaxValue - num) / 50f, -1f, 1f);
         }
 
-        public void GetConsumptionRates(Randomizer randomizer, int productionRate, out int electricityConsumption, out int waterConsumption, out int sewageAccumulation, out int garbageAccumulation, out int incomeAccumulation) 
+        public void GetConsumptionRates(Randomizer randomizer, int productionRate, out int electricityConsumption, out int waterConsumption, out int sewageAccumulation, out int garbageAccumulation, out int incomeAccumulation)
         {
             electricityConsumption = 0;
             waterConsumption = 0;
             sewageAccumulation = 0;
             garbageAccumulation = 0;
             incomeAccumulation = 0;
-            switch (quality) 
+            switch (quality)
             {
                 case 1:
                     electricityConsumption = 18;
@@ -796,13 +842,13 @@ namespace CimCareMod.AI {
 
             if (electricityConsumption != 0)
                 electricityConsumption = Mathf.Max(100, productionRate * electricityConsumption + randomizer.Int32(70U)) / 100;
-            if (waterConsumption != 0) 
+            if (waterConsumption != 0)
             {
                 int waterAndSewageConsumptionModifier = randomizer.Int32(70U);
                 waterConsumption = Mathf.Max(100, productionRate * waterConsumption + waterAndSewageConsumptionModifier) / 100;
                 if (sewageAccumulation != 0)
                     sewageAccumulation = Mathf.Max(100, productionRate * sewageAccumulation + waterAndSewageConsumptionModifier) / 100;
-            } 
+            }
             else if (sewageAccumulation != 0)
                 sewageAccumulation = Mathf.Max(100, productionRate * sewageAccumulation + randomizer.Int32(70U)) / 100;
             if (garbageAccumulation != 0)
@@ -812,7 +858,7 @@ namespace CimCareMod.AI {
             incomeAccumulation = productionRate * incomeAccumulation;
         }
 
-        private void getOccupancyDetails(ref Building data, out int numResidents, out int numRoomsOccupied) 
+        private void getOccupancyDetails(ref Building data, out int numResidents, out int numRoomsOccupied)
         {
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
             uint citizenUnitIndex = data.m_citizenUnits;
@@ -822,28 +868,28 @@ namespace CimCareMod.AI {
             int counter = 0;
 
             // Calculate number of occupied rooms and total number of residents
-            while ((int) citizenUnitIndex != 0) 
+            while ((int)citizenUnitIndex != 0)
             {
                 uint nextCitizenUnitIndex = citizenManager.m_units.m_buffer[citizenUnitIndex].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None) 
+                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
                 {
                     bool occupied = false;
-                    for (int index = 0; index < 5; ++index) 
+                    for (int index = 0; index < 5; ++index)
                     {
                         uint citizenId = citizenManager.m_units.m_buffer[citizenUnitIndex].GetCitizen(index);
-                        if (citizenId != 0) 
+                        if (citizenId != 0)
                         {
                             occupied = true;
                             numResidents++;
                         }
                     }
-                    if (occupied) 
+                    if (occupied)
                     {
                         numRoomsOccupied++;
                     }
                 }
                 citizenUnitIndex = nextCitizenUnitIndex;
-                if (++counter > numCitizenUnits) 
+                if (++counter > numCitizenUnits)
                 {
                     CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
                     break;
@@ -851,37 +897,37 @@ namespace CimCareMod.AI {
             }
         }
 
-        public void updateCapacity(float newCapacityModifier) 
+        public void updateCapacity(float newCapacityModifier)
         {
-            Logger.logInfo(Logger.LOG_OPTIONS, "NursingHomeAI.updateCapacity -- Updating capacity with modifier: {0}", newCapacityModifier);
+            Logger.LogInfo(Logger.LOG_OPTIONS, "NursingHomeAI.updateCapacity -- Updating capacity with modifier: {0}", newCapacityModifier);
             // Set the capcityModifier and check to see if the value actually changes
-            if (Interlocked.Exchange(ref capacityModifier, newCapacityModifier) == newCapacityModifier) 
+            if (Interlocked.Exchange(ref capacityModifier, newCapacityModifier) == newCapacityModifier)
             {
                 // Capcity has already been set to this value, nothing to do
-                Logger.logInfo(Logger.LOG_OPTIONS, "NursingHomeAI.updateCapacity -- Skipping capacity change because the value was already set");
+                Logger.LogInfo(Logger.LOG_OPTIONS, "NursingHomeAI.updateCapacity -- Skipping capacity change because the value was already set");
                 return;
             }
         }
 
-        private int getModifiedCapacity() 
+        private int getModifiedCapacity()
         {
-            return (capacityModifier > 0 ? (int) (numRooms * capacityModifier) : numRooms);
+            return (capacityModifier > 0 ? (int)(numRooms * capacityModifier) : numRooms);
         }
 
-        public void validateCapacity(ushort buildingId, ref Building data, bool shouldCreateRooms) 
+        public void validateCapacity(ushort buildingId, ref Building data, bool shouldCreateRooms)
         {
             int numRoomsExpected = getModifiedCapacity();
-            
+
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
             uint citizenUnitIndex = data.m_citizenUnits;
             uint lastCitizenUnitIndex = 0;
             int numRoomsFound = 0;
 
             // Count the number of rooms
-            while ((int) citizenUnitIndex != 0) 
+            while ((int)citizenUnitIndex != 0)
             {
                 uint nextCitizenUnitIndex = citizenManager.m_units.m_buffer[citizenUnitIndex].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None) 
+                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
                 {
                     numRoomsFound++;
                 }
@@ -889,58 +935,58 @@ namespace CimCareMod.AI {
                 citizenUnitIndex = nextCitizenUnitIndex;
             }
 
-            Logger.logInfo(Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAi.validateCapacity -- Checking Expected Capacity {0} vs Current Capacity {1} for Building {2}", numRoomsExpected, numRoomsFound, buildingId);
+            Logger.LogInfo(Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAi.validateCapacity -- Checking Expected Capacity {0} vs Current Capacity {1} for Building {2}", numRoomsExpected, numRoomsFound, buildingId);
             // Check to see if the correct amount of rooms are present, otherwise adjust accordingly
-            if (numRoomsFound == numRoomsExpected) 
+            if (numRoomsFound == numRoomsExpected)
             {
                 return;
-            } 
-            else if (numRoomsFound < numRoomsExpected) 
+            }
+            else if (numRoomsFound < numRoomsExpected)
             {
-                if (shouldCreateRooms) 
+                if (shouldCreateRooms)
                 {
                     // Only create rooms after a building is already loaded, otherwise let EnsureCitizenUnits to create them
                     createRooms((numRoomsExpected - numRoomsFound), buildingId, ref data, lastCitizenUnitIndex);
                 }
-            } 
-            else 
+            }
+            else
             {
                 deleteRooms((numRoomsFound - numRoomsExpected), buildingId, ref data);
             }
         }
 
-        private void createRooms(int numRoomsToCreate, ushort buildingId, ref Building data, uint lastCitizenUnitIndex) 
+        private void createRooms(int numRoomsToCreate, ushort buildingId, ref Building data, uint lastCitizenUnitIndex)
         {
-            Logger.logInfo(Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAi.createRooms -- Creating {0} Rooms", numRoomsToCreate);
+            Logger.LogInfo(Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAi.createRooms -- Creating {0} Rooms", numRoomsToCreate);
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
-            citizenManager.CreateUnits(out uint firstUnit, ref Singleton<SimulationManager>.instance.m_randomizer, buildingId, (ushort) 0, numRoomsToCreate, 0, 0, 0, 0);
+            citizenManager.CreateUnits(out uint firstUnit, ref Singleton<SimulationManager>.instance.m_randomizer, buildingId, (ushort)0, numRoomsToCreate, 0, 0, 0, 0);
             citizenManager.m_units.m_buffer[lastCitizenUnitIndex].m_nextUnit = firstUnit;
         }
 
-        private void deleteRooms(int numRoomsToDelete, ushort buildingId, ref Building data) 
+        private void deleteRooms(int numRoomsToDelete, ushort buildingId, ref Building data)
         {
-            Logger.logInfo(Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAi.deleteRooms -- Deleting {0} Rooms", numRoomsToDelete);
+            Logger.LogInfo(Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAi.deleteRooms -- Deleting {0} Rooms", numRoomsToDelete);
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
-            
+
             // Always start with the second to avoid loss of pointer from the building to the first unit
             uint prevUnit = data.m_citizenUnits;
             uint citizenUnitIndex = citizenManager.m_units.m_buffer[data.m_citizenUnits].m_nextUnit;
 
             // First try to delete empty rooms
-            while (numRoomsToDelete > 0 && (int) citizenUnitIndex != 0) 
+            while (numRoomsToDelete > 0 && (int)citizenUnitIndex != 0)
             {
                 bool deleted = false;
                 uint nextCitizenUnitIndex = citizenManager.m_units.m_buffer[citizenUnitIndex].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None) 
+                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
                 {
-                    if (citizenManager.m_units.m_buffer[citizenUnitIndex].Empty()) 
+                    if (citizenManager.m_units.m_buffer[citizenUnitIndex].Empty())
                     {
                         deleteRoom(citizenUnitIndex, ref citizenManager.m_units.m_buffer[citizenUnitIndex], prevUnit);
                         numRoomsToDelete--;
                         deleted = true;
                     }
                 }
-                if(!deleted) 
+                if (!deleted)
                 {
                     prevUnit = citizenUnitIndex;
                 }
@@ -948,29 +994,29 @@ namespace CimCareMod.AI {
             }
 
             // Check to see if enough rooms were deleted
-            if(numRoomsToDelete == 0) 
+            if (numRoomsToDelete == 0)
             {
                 return;
             }
 
-            Logger.logInfo(Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAi.deleteRooms -- Deleting {0} Occupied Rooms", numRoomsToDelete);
+            Logger.LogInfo(Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAi.deleteRooms -- Deleting {0} Occupied Rooms", numRoomsToDelete);
             // Still need to delete more rooms so start deleting rooms with people in them...
             // Always start with the second to avoid loss of pointer from the building to the first unit
             prevUnit = data.m_citizenUnits;
             citizenUnitIndex = citizenManager.m_units.m_buffer[data.m_citizenUnits].m_nextUnit;
 
             // Delete any rooms still available until the correct number is acheived
-            while (numRoomsToDelete > 0 && (int) citizenUnitIndex != 0) 
+            while (numRoomsToDelete > 0 && (int)citizenUnitIndex != 0)
             {
                 bool deleted = false;
                 uint nextCitizenUnitIndex = citizenManager.m_units.m_buffer[citizenUnitIndex].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None) 
+                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
                 {
                     deleteRoom(citizenUnitIndex, ref citizenManager.m_units.m_buffer[citizenUnitIndex], prevUnit);
                     numRoomsToDelete--;
                     deleted = true;
                 }
-                if (!deleted) 
+                if (!deleted)
                 {
                     prevUnit = citizenUnitIndex;
                 }
@@ -978,7 +1024,7 @@ namespace CimCareMod.AI {
             }
         }
 
-        private void deleteRoom(uint unit, ref CitizenUnit data, uint prevUnit) 
+        private void deleteRoom(uint unit, ref CitizenUnit data, uint prevUnit)
         {
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
 
@@ -997,27 +1043,27 @@ namespace CimCareMod.AI {
             citizenManager.m_units.ReleaseItem(unit);
         }
 
-        private void releaseUnitCitizen(uint citizen, ref CitizenUnit data) 
+        private void releaseUnitCitizen(uint citizen, ref CitizenUnit data)
         {
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
 
-            if ((int) citizen == 0) 
+            if ((int)citizen == 0)
             {
                 return;
             }
-            if ((data.m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None) 
+            if ((data.m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
             {
                 citizenManager.m_citizens.m_buffer[citizen].m_homeBuilding = 0;
             }
-            if ((data.m_flags & (CitizenUnit.Flags.Work | CitizenUnit.Flags.Student)) != CitizenUnit.Flags.None) 
+            if ((data.m_flags & (CitizenUnit.Flags.Work | CitizenUnit.Flags.Student)) != CitizenUnit.Flags.None)
             {
                 citizenManager.m_citizens.m_buffer[citizen].m_workBuilding = 0;
             }
-            if ((data.m_flags & CitizenUnit.Flags.Visit) != CitizenUnit.Flags.None) 
+            if ((data.m_flags & CitizenUnit.Flags.Visit) != CitizenUnit.Flags.None)
             {
                 citizenManager.m_citizens.m_buffer[citizen].m_visitBuilding = 0;
             }
-            if ((data.m_flags & CitizenUnit.Flags.Vehicle) == CitizenUnit.Flags.None) 
+            if ((data.m_flags & CitizenUnit.Flags.Vehicle) == CitizenUnit.Flags.None)
             {
                 return;
             }
