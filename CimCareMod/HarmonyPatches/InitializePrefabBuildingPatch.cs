@@ -42,8 +42,8 @@ namespace CimCareMod.HarmonyPatches
                 BuildingInfo childCareBuildingInfo = PrefabCollection<BuildingInfo>.FindLoaded("Child Health Center 01");
                 BuildingInfo elderCareBuildingInfo = PrefabCollection<BuildingInfo>.FindLoaded("Eldercare 01");
 
-                float childCareCapcityModifier = CimCareMod.getInstance().getOptionsManager().getOrphanagesCapacityModifier();
-                float elderCareCapcityModifier = CimCareMod.getInstance().getOptionsManager().getNursingHomesCapacityModifier();
+                float childCareCapcityModifier = CimCareMod.getInstance().getOptionsManager().GetOrphanagesCapacityModifier();
+                float elderCareCapcityModifier = CimCareMod.getInstance().getOptionsManager().GetNursingHomesCapacityModifier();
 
                 uint index = 0U;
                 for (; PrefabCollection<BuildingInfo>.LoadedCount() > index; ++index) 
@@ -54,12 +54,12 @@ namespace CimCareMod.HarmonyPatches
                     if (buildingInfo != null && buildingInfo.GetAI() is OrphanageAI orphanagAI)
                     {
                         buildingInfo.m_class = childCareBuildingInfo.m_class;
-                        orphanagAI.updateCapacity(childCareCapcityModifier);  
+                        orphanagAI.UpdateCapacity(childCareCapcityModifier);
                     }
                     else if (buildingInfo != null && buildingInfo.GetAI() is NursingHomeAI nursingHomeAI)
                     {
                         buildingInfo.m_class = elderCareBuildingInfo.m_class;
-                        nursingHomeAI.updateCapacity(elderCareCapcityModifier);  
+                        nursingHomeAI.UpdateCapacity(elderCareCapcityModifier);
                     }
                 }
             }

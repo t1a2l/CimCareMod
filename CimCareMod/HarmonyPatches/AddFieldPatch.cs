@@ -9,8 +9,8 @@ namespace CimCareMod.HarmonyPatches
     public class AddFieldPatch
     {
         [HarmonyPatch(typeof(DecorationPropertiesPanel), "AddField",
-            new Type[] { typeof(UIComponent), typeof(string), typeof(float), typeof(Type), typeof(string), typeof(int), typeof(object), typeof(object) },
-            new ArgumentType[] { ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal })]
+            [typeof(UIComponent), typeof(string), typeof(float), typeof(Type), typeof(string), typeof(int), typeof(object), typeof(object)],
+            [ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal])]
         [HarmonyPrefix]
         public static bool AddField(DecorationPropertiesPanel __instance, UIComponent container, string locale, float width, Type type, string name, int arrayIndex, object target, object initialValue)
 		{

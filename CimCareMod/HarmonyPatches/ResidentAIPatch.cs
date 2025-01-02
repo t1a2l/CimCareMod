@@ -25,7 +25,7 @@ namespace CimCareMod.HarmonyPatches
 	        {
 		        return false;
 	        }
-	        Randomizer r = new Randomizer(citizenId);
+	        Randomizer r = new(citizenId);
 	        if (r.Int32(20u) != 0)
 	        {
 		        return false;
@@ -101,7 +101,7 @@ namespace CimCareMod.HarmonyPatches
                 DistrictPolicies.Services servicePolicies = instance2.m_districts.m_buffer[district].m_servicePolicies;
 
                 // Add a transfer offer
-                TransferManager.TransferOffer offer = default(TransferManager.TransferOffer);
+                TransferManager.TransferOffer offer = default;
                 offer.Priority = 6;
                 offer.Citizen = citizenID;
                 offer.Position = position;

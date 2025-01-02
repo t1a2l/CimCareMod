@@ -1,5 +1,7 @@
-﻿namespace CimCareMod.Utils {
-    public struct NumWorkers {
+﻿namespace CimCareMod.Utils
+{
+    public struct NumWorkers
+    {
 
         public int maxNumUneducatedWorkers;
         public int numUneducatedWorkers;
@@ -9,7 +11,7 @@
 
         public int maxNumWellEducatedWorkers;
         public int numWellEducatedWorkers;
-        
+
         public int maxNumHighlyEducatedWorkers;
         public int numHighlyEducatedWorkers;
     }

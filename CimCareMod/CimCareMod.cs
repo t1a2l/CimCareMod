@@ -35,13 +35,13 @@ namespace CimCareMod
 
         public OptionsManager getOptionsManager() 
         {
-            return this.optionsManager;
+            return optionsManager;
         }
 
         public void OnSettingsUI(UIHelperBase helper) 
         {
-            this.optionsManager.initialize(helper);
-            this.optionsManager.loadOptions();
+            optionsManager.Initialize(helper);
+            optionsManager.LoadOptions();
         }
 
         public override void OnCreated(ILoading loading) 

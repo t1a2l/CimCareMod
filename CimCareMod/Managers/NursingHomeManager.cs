@@ -6,9 +6,9 @@ using ColossalFramework.Math;
 using ICities;
 using CimCareMod.AI;
 
-namespace CimCareMod.Managers 
+namespace CimCareMod.Managers
 {
-    public class NursingHomeManager : ThreadingExtensionBase 
+    public class NursingHomeManager : ThreadingExtensionBase
     {
         private const int DEFAULT_NUM_SEARCH_ATTEMPTS = 3;
 
@@ -31,21 +31,21 @@ namespace CimCareMod.Managers
 
         private int seniorCheckCounter;
 
-        public NursingHomeManager() 
+        public NursingHomeManager()
         {
             Logger.LogInfo(Logger.LOG_SENIORS, "NursingHomeManager Created");
             instance = this;
 
-            this.randomizer = new Randomizer((uint) 73);
-            this.citizenManager = Singleton<CitizenManager>.instance;
-            this.buildingManager = Singleton<BuildingManager>.instance;
+            randomizer = new Randomizer((uint)73);
+            citizenManager = Singleton<CitizenManager>.instance;
+            buildingManager = Singleton<BuildingManager>.instance;
 
-            this.familiesWithSeniors = [];
+            familiesWithSeniors = [];
 
-            this.seniorCitizensBeingProcessed = [];
+            seniorCitizensBeingProcessed = [];
         }
 
-        public static NursingHomeManager getInstance() 
+        public static NursingHomeManager GetInstance()
         {
             return instance;
         }
@@ -74,7 +74,7 @@ namespace CimCareMod.Managers
                 return;
             }
 
-            if (Interlocked.CompareExchange(ref this.running, 1, 0) == 1)
+            if (Interlocked.CompareExchange(ref running, 1, 0) == 1)
             {
                 return;
             }
@@ -84,10 +84,10 @@ namespace CimCareMod.Managers
 
             RefreshSeniorCitizens(step);
 
-            this.running = 0;
+            running = 0;
         }
 
-        private void RefreshSeniorCitizens(ushort step) 
+        private void RefreshSeniorCitizens(ushort step)
         {
             CitizenManager instance = Singleton<CitizenManager>.instance;
 
@@ -117,9 +117,9 @@ namespace CimCareMod.Managers
                         for (int j = 0; j < 5; j++)
                         {
                             uint citizenId = citizenUnit.GetCitizen(j);
-                            if (citizenManager.m_citizens.m_buffer[citizenId].m_flags.IsFlagSet(Citizen.Flags.Created) && this.isSenior(citizenId) && this.validateSeniorCitizen(citizenId))
+                            if (citizenManager.m_citizens.m_buffer[citizenId].m_flags.IsFlagSet(Citizen.Flags.Created) && IsSenior(citizenId) && ValidateSeniorCitizen(citizenId))
                             {
-                                this.familiesWithSeniors.Add(num);
+                                familiesWithSeniors.Add(num);
                                 break;
                             }
                         }
@@ -134,61 +134,61 @@ namespace CimCareMod.Managers
             }
         }
 
-        public uint[] getFamilyWithSenior() 
+        public uint[] GetFamilyWithSenior()
         {
-            return this.getFamilyWithSenior(DEFAULT_NUM_SEARCH_ATTEMPTS);
+            return GetFamilyWithSenior(DEFAULT_NUM_SEARCH_ATTEMPTS);
         }
 
-        public uint[] getFamilyWithSenior(int numAttempts) 
+        public uint[] GetFamilyWithSenior(int numAttempts)
         {
-            Logger.LogInfo(Logger.LOG_SENIORS, "NursingHomeManager.getFamilyWithSenior -- Start");
+            Logger.LogInfo(Logger.LOG_SENIORS, "NursingHomeManager.GetFamilyWithSenior -- Start");
             // Lock to prevent refreshing while running, otherwise bail
-            if (Interlocked.CompareExchange(ref this.running, 1, 0) == 1) 
+            if (Interlocked.CompareExchange(ref running, 1, 0) == 1)
             {
                 return null;
             }
 
             // Get random family that contains at least one senior
-            uint[] family = this.getFamilyWithSeniorInternal(numAttempts);
-            if (family == null) 
+            uint[] family = GetFamilyWithSeniorInternal(numAttempts);
+            if (family == null)
             {
-                Logger.LogInfo(Logger.LOG_SENIORS, "NursingHomeManager.getFamilyWithSenior -- No Family");
-                this.running = 0;
+                Logger.LogInfo(Logger.LOG_SENIORS, "NursingHomeManager.GetFamilyWithSenior -- No Family");
+                running = 0;
                 return null;
             }
 
             // Mark all seniors in the family as being processed
-            foreach (uint familyMember in family) 
+            foreach (uint familyMember in family)
             {
-                if (this.isSenior(familyMember)) 
+                if (IsSenior(familyMember))
                 {
-                    this.seniorCitizensBeingProcessed.Add(familyMember);
+                    seniorCitizensBeingProcessed.Add(familyMember);
                 }
             }
 
 
-            Logger.LogInfo(Logger.LOG_SENIORS, "NursingHomeManager.getFamilyWithSenior -- Finished: {0}", string.Join(", ", Array.ConvertAll(family, item => item.ToString())));
-            this.running = 0;
+            Logger.LogInfo(Logger.LOG_SENIORS, "NursingHomeManager.GetFamilyWithSenior -- Finished: {0}", string.Join(", ", Array.ConvertAll(family, item => item.ToString())));
+            running = 0;
             return family;
         }
 
-        public void doneProcessingSenior(uint seniorCitizenId) 
+        public void DoneProcessingSenior(uint seniorCitizenId)
         {
-            this.seniorCitizensBeingProcessed.Remove(seniorCitizenId);
+            seniorCitizensBeingProcessed.Remove(seniorCitizenId);
         }
 
-        private uint[] getFamilyWithSeniorInternal(int numAttempts) 
+        private uint[] GetFamilyWithSeniorInternal(int numAttempts)
         {
             // Check to see if too many attempts already
-            if (numAttempts <= 0) 
+            if (numAttempts <= 0)
             {
                 return null;
             }
 
             // Get a random senior citizen
-            uint familyId = this.fetchRandomFamilyWithSeniorCitizen();
-            Logger.LogInfo(Logger.LOG_SENIORS, "NursingHomeManager.getFamilyWithSeniorInternal -- Family Id: {0}", familyId);
-            if (familyId == 0) 
+            uint familyId = FetchRandomFamilyWithSeniorCitizen();
+            Logger.LogInfo(Logger.LOG_SENIORS, "NursingHomeManager.GetFamilyWithSeniorInternal -- Family Id: {0}", familyId);
+            if (familyId == 0)
             {
                 // No Family with Senior Citizens to be located
                 return null;
@@ -196,63 +196,63 @@ namespace CimCareMod.Managers
 
 
             // Validate all seniors in the family and build an array of family members
-            CitizenUnit familyWithSenior = this.citizenManager.m_units.m_buffer[familyId];
+            CitizenUnit familyWithSenior = citizenManager.m_units.m_buffer[familyId];
             uint[] family = new uint[5];
             bool seniorPresent = false;
-            for (int i = 0; i < 5; i++) 
+            for (int i = 0; i < 5; i++)
             {
                 uint familyMember = familyWithSenior.GetCitizen(i);
-                if (this.isSenior(familyMember)) 
+                if (IsSenior(familyMember))
                 {
-                    if (!this.validateSeniorCitizen(familyMember)) 
+                    if (!ValidateSeniorCitizen(familyMember))
                     {
                         // This particular Senior Citizen is no longer valid for some reason, call recursively with one less attempt
-                        return this.getFamilyWithSeniorInternal(--numAttempts);
+                        return GetFamilyWithSeniorInternal(--numAttempts);
                     }
                     seniorPresent = true;
                 }
-                Logger.LogInfo(Logger.LOG_SENIORS, "NursingHomeManager.getFamilyWithSeniorInternal -- Family Member: {0}", familyMember);
+                Logger.LogInfo(Logger.LOG_SENIORS, "NursingHomeManager.GetFamilyWithSeniorInternal -- Family Member: {0}", familyMember);
                 family[i] = familyMember;
             }
 
-            if (!seniorPresent) 
+            if (!seniorPresent)
             {
                 // No Senior was found in this family (which is a bit weird), try again
-                return this.getFamilyWithSeniorInternal(--numAttempts);
+                return GetFamilyWithSeniorInternal(--numAttempts);
             }
 
             return family;
         }
 
-        private uint fetchRandomFamilyWithSeniorCitizen() 
+        private uint FetchRandomFamilyWithSeniorCitizen()
         {
-            if (this.familiesWithSeniors.Count == 0)
+            if (familiesWithSeniors.Count == 0)
             {
                 return 0;
             }
 
-            int index = this.randomizer.Int32((uint)this.familiesWithSeniors.Count);
-            var family = this.familiesWithSeniors[index];
-            this.familiesWithSeniors.RemoveAt(index);
+            int index = randomizer.Int32((uint)familiesWithSeniors.Count);
+            var family = familiesWithSeniors[index];
+            familiesWithSeniors.RemoveAt(index);
             return family;
         }
 
-        public bool isSenior(uint seniorCitizenId) 
+        public bool IsSenior(uint seniorCitizenId)
         {
-            if (seniorCitizenId == 0) 
+            if (seniorCitizenId == 0)
             {
                 return false;
             }
 
             // Validate not dead
-            if (this.citizenManager.m_citizens.m_buffer[seniorCitizenId].Dead) 
+            if (citizenManager.m_citizens.m_buffer[seniorCitizenId].Dead)
             {
                 return false;
             }
 
             // Validate Age
-            int age = this.citizenManager.m_citizens.m_buffer[seniorCitizenId].Age;
-            if (age <= Citizen.AGE_LIMIT_ADULT || age >= Citizen.AGE_LIMIT_SENIOR) 
+            int age = citizenManager.m_citizens.m_buffer[seniorCitizenId].Age;
+            if (age <= Citizen.AGE_LIMIT_ADULT || age >= Citizen.AGE_LIMIT_SENIOR)
             {
                 return false;
             }
@@ -260,23 +260,23 @@ namespace CimCareMod.Managers
             return true;
         }
 
-        private bool validateSeniorCitizen(uint seniorCitizenId) 
+        private bool ValidateSeniorCitizen(uint seniorCitizenId)
         {
             // Validate this Senior is not already being processed
-            if (this.seniorCitizensBeingProcessed.Contains(seniorCitizenId)) 
+            if (seniorCitizensBeingProcessed.Contains(seniorCitizenId))
             {
                 return false;
             }
 
             // Validate not homeless
-            ushort homeBuildingId = this.citizenManager.m_citizens.m_buffer[seniorCitizenId].m_homeBuilding;
-            if (homeBuildingId == 0) 
+            ushort homeBuildingId = citizenManager.m_citizens.m_buffer[seniorCitizenId].m_homeBuilding;
+            if (homeBuildingId == 0)
             {
                 return false;
             }
 
             // Validate not already living in a nursing home
-            if (this.buildingManager.m_buildings.m_buffer[homeBuildingId].Info.m_buildingAI is NursingHomeAI) 
+            if (buildingManager.m_buildings.m_buffer[homeBuildingId].Info.m_buildingAI is NursingHomeAI)
             {
                 return false;
             }
