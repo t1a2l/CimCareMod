@@ -453,10 +453,10 @@ namespace CimCareMod.AI
             }
 
             // Fetch a Child
-            OrphanageManager orphanageManager = OrphanageManager.getInstance();
+            OrphanageManager orphanageManager = OrphanageManager.GetInstance();
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
 
-            uint[] familyWithChildren = orphanageManager.getFamilyWithChildren();
+            uint[] familyWithChildren = orphanageManager.GetFamilyWithChildren();
             if (familyWithChildren == null)
             {
                 // No Family Located
@@ -468,7 +468,7 @@ namespace CimCareMod.AI
 
             // Check move in chance
             NumWorkers numWorkers = GetNumWorkers(ref behaviour);
-            bool shouldMoveIn = MoveInProbabilityHelper.checkIfShouldMoveIn(familyWithChildren, ref buildingData, ref randomizer, operationRadius, quality, ref numWorkers);
+            bool shouldMoveIn = MoveInProbabilityHelper.CheckIfShouldMoveIn(familyWithChildren, ref buildingData, ref randomizer, operationRadius, quality, ref numWorkers);
 
             if (shouldMoveIn)
             {
@@ -476,7 +476,7 @@ namespace CimCareMod.AI
                 List<uint> childrenList = [];
                 foreach (uint familyMember in familyWithChildren)
                 {
-                    if (orphanageManager.isChild(familyMember))
+                    if (orphanageManager.IsChild(familyMember))
                     {
                         Logger.LogInfo(Logger.LOG_PRODUCTION, "OrphanageAI.ProduceGoods -- familyMember: {0} is a child", familyMember);
                         childrenList.Add(familyMember);
@@ -494,12 +494,12 @@ namespace CimCareMod.AI
                     uint childId = childrenList[i];
                     Logger.LogInfo(Logger.LOG_PRODUCTION, "OrphanageAI.ProduceGoods -- Moving In: {0}", childId);
                     citizenManager.m_citizens.m_buffer[childId].SetHome(childId, buildingID, orphanageRoomId);
-                    orphanageManager.doneProcessingChild(childId);
+                    orphanageManager.DoneProcessingChild(childId);
                 }
             }
 
             // Fetch orpahns who needs to move out of the orpahange
-            uint[] OrphanesRoomOrphans = orphanageManager.getOrphanesRoom();
+            uint[] OrphanesRoomOrphans = orphanageManager.GetOrphanesRoom();
             if (OrphanesRoomOrphans != null)
             {
                 Logger.LogInfo(Logger.LOG_PRODUCTION, "------------------------------------------------------------");
@@ -511,7 +511,7 @@ namespace CimCareMod.AI
                     if (orphanId != 0)
                     {
                         citizenManager.m_citizens.m_buffer[orphanId].SetHome(orphanId, 0, 0);
-                        orphanageManager.doneProcessingChild(orphanId);
+                        orphanageManager.DoneProcessingChild(orphanId);
                     }
                 }
             }

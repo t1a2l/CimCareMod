@@ -459,8 +459,8 @@ namespace CimCareMod.AI
             }
 
             // Fetch a Senior Citizen
-            NursingHomeManager nursingHomeManager = NursingHomeManager.getInstance();
-            uint[] familyWithSeniors = nursingHomeManager.getFamilyWithSenior();
+            NursingHomeManager nursingHomeManager = NursingHomeManager.GetInstance();
+            uint[] familyWithSeniors = nursingHomeManager.GetFamilyWithSenior();
             if (familyWithSeniors == null)
             {
                 // No Family Located
@@ -472,20 +472,20 @@ namespace CimCareMod.AI
 
             // Check move in chance
             NumWorkers numWorkers = GetNumWorkers(ref behaviour);
-            bool shouldMoveIn = MoveInProbabilityHelper.checkIfShouldMoveIn(familyWithSeniors, ref buildingData, ref randomizer, operationRadius, quality, ref numWorkers);
+            bool shouldMoveIn = MoveInProbabilityHelper.CheckIfShouldMoveIn(familyWithSeniors, ref buildingData, ref randomizer, operationRadius, quality, ref numWorkers);
 
             // Process the seniors and move them in if able to, mark the seniors as done processing regardless
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
             foreach (uint familyMember in familyWithSeniors)
             {
-                if (nursingHomeManager.isSenior(familyMember))
+                if (nursingHomeManager.IsSenior(familyMember))
                 {
                     if (shouldMoveIn)
                     {
                         Logger.LogInfo(Logger.LOG_PRODUCTION, "NursingHomeAI.ProduceGoods -- Moving In: {0}", familyMember);
                         citizenManager.m_citizens.m_buffer[familyMember].SetHome(familyMember, buildingID, emptyRoom);
                     }
-                    nursingHomeManager.doneProcessingSenior(familyMember);
+                    nursingHomeManager.DoneProcessingSenior(familyMember);
                 }
             }
         }

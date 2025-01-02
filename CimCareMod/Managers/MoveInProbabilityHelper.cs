@@ -77,13 +77,13 @@ namespace CimCareMod.Managers
 
         private static float GetAverageAgeOfChildren(uint[] familyWithChildren)
         {
-            OrphanageManager orphanageManager = OrphanageManager.getInstance();
+            OrphanageManager orphanageManager = OrphanageManager.GetInstance();
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
             int numChildren = 0;
             int combinedAge = 0;
             foreach (uint familyMember in familyWithChildren)
             {
-                if (orphanageManager.isChild(familyMember))
+                if (orphanageManager.IsChild(familyMember))
                 {
                     numChildren++;
                     combinedAge += citizenManager.m_citizens.m_buffer[familyMember].Age;
@@ -100,13 +100,13 @@ namespace CimCareMod.Managers
 
         private static float GetAverageAgeOfSeniors(uint[] familyWithSeniors)
         {
-            NursingHomeManager nursingHomeManager = NursingHomeManager.getInstance();
+            NursingHomeManager nursingHomeManager = NursingHomeManager.GetInstance();
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
             int numSeniors = 0;
             int combinedAge = 0;
             foreach (uint familyMember in familyWithSeniors)
             {
-                if (nursingHomeManager.isSenior(familyMember))
+                if (nursingHomeManager.IsSenior(familyMember))
                 {
                     numSeniors++;
                     combinedAge += citizenManager.m_citizens.m_buffer[familyMember].Age;
