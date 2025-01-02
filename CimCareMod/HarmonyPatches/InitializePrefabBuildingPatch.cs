@@ -55,11 +55,13 @@ namespace CimCareMod.HarmonyPatches
                     {
                         buildingInfo.m_class = childCareBuildingInfo.m_class;
                         orphanagAI.UpdateCapacity(childCareCapcityModifier);
+                        buildingInfo.m_placementMode = BuildingInfo.PlacementMode.Roadside;
                     }
                     else if (buildingInfo != null && buildingInfo.GetAI() is NursingHomeAI nursingHomeAI)
                     {
                         buildingInfo.m_class = elderCareBuildingInfo.m_class;
                         nursingHomeAI.UpdateCapacity(elderCareCapcityModifier);
+                        buildingInfo.m_placementMode = BuildingInfo.PlacementMode.Roadside;
                     }
                 }
             }
