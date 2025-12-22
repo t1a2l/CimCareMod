@@ -42,8 +42,8 @@ namespace CimCareMod.HarmonyPatches
                 BuildingInfo childCareBuildingInfo = PrefabCollection<BuildingInfo>.FindLoaded("Child Health Center 01");
                 BuildingInfo elderCareBuildingInfo = PrefabCollection<BuildingInfo>.FindLoaded("Eldercare 01");
 
-                float childCareCapcityModifier = CimCareMod.getInstance().getOptionsManager().GetOrphanagesCapacityModifier();
-                float elderCareCapcityModifier = CimCareMod.getInstance().getOptionsManager().GetNursingHomesCapacityModifier();
+                float childCareCapcityModifier = Mod.GetInstance().GetOptionsManager().GetOrphanagesCapacityModifier();
+                float elderCareCapcityModifier = Mod.GetInstance().GetOptionsManager().GetNursingHomesCapacityModifier();
 
                 uint index = 0U;
                 for (; PrefabCollection<BuildingInfo>.LoadedCount() > index; ++index) 

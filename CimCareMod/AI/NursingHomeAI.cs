@@ -170,7 +170,7 @@ namespace CimCareMod.AI
             base.BuildingLoaded(buildingID, ref data, version);
 
             // Validate the capacity and adjust accordingly - but don't create new units, that will be done by EnsureCitizenUnits
-            float capcityModifier = CimCareMod.getInstance().getOptionsManager().GetNursingHomesCapacityModifier();
+            float capcityModifier = Mod.GetInstance().GetOptionsManager().GetNursingHomesCapacityModifier();
             UpdateCapacity(capcityModifier);
             ValidateCapacity(buildingID, ref data, false);
 
@@ -183,7 +183,7 @@ namespace CimCareMod.AI
             base.EndRelocating(buildingID, ref data);
 
             // Validate the capacity and adjust accordingly - but don't create new units, that will be done by EnsureCitizenUnits
-            float capcityModifier = CimCareMod.getInstance().getOptionsManager().GetNursingHomesCapacityModifier();
+            float capcityModifier = Mod.GetInstance().GetOptionsManager().GetNursingHomesCapacityModifier();
             UpdateCapacity(capcityModifier);
             ValidateCapacity(buildingID, ref data, false);
 
@@ -280,7 +280,7 @@ namespace CimCareMod.AI
 
             districtManager.m_districts.m_buffer[district].m_servicePoliciesEffect |= policies & (DistrictPolicies.Services.PowerSaving | DistrictPolicies.Services.WaterSaving | DistrictPolicies.Services.SmokeDetectors | DistrictPolicies.Services.PetBan | DistrictPolicies.Services.Recycling | DistrictPolicies.Services.SmokingBan | DistrictPolicies.Services.ExtraInsulation | DistrictPolicies.Services.NoElectricity | DistrictPolicies.Services.OnlyElectricity);
 
-            GetConsumptionRates(new Randomizer(buildingID), 100, out int electricityConsumption, out int waterConsumption, out int sewageAccumulation, out int garbageAccumulation, out int incomeAccumulation);
+            GetConsumptionRates(new Randomizer(buildingID), 100, out int electricityConsumption, out int waterConsumption, out int sewageAccumulation, out int garbageAccumulation, out _);
 
             int modifiedElectricityConsumption = 1 + (electricityConsumption * behaviour.m_electricityConsumption + 9999) / 10000;
             waterConsumption = 1 + (waterConsumption * behaviour.m_waterConsumption + 9999) / 10000;
@@ -348,7 +348,7 @@ namespace CimCareMod.AI
                 Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.ElderCare, behaviour.m_healthAccumulation, buildingData.m_position, radius);
                 Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Health, behaviour.m_healthAccumulation, buildingData.m_position, radius);
             }
-            Logger.LogInfo(Logger.LOG_SIMULATION, "NursingHomeAI.SimulationStepActive -- health: {0}", health);
+            Utils.Logger.LogInfo(Utils.Logger.LOG_SIMULATION, "NursingHomeAI.SimulationStepActive -- health: {0}", health);
 
             // Get the Wellbeing
             int wellbeing = 0;
@@ -360,7 +360,7 @@ namespace CimCareMod.AI
                 }
                 Singleton<ImmaterialResourceManager>.instance.AddResource(ImmaterialResourceManager.Resource.Wellbeing, behaviour.m_wellbeingAccumulation, buildingData.m_position, radius);
             }
-            Logger.LogInfo(Logger.LOG_SIMULATION, "NursingHomeAI.SimulationStepActive -- wellbeing: {0}", wellbeing);
+            Utils.Logger.LogInfo(Utils.Logger.LOG_SIMULATION, "NursingHomeAI.SimulationStepActive -- wellbeing: {0}", wellbeing);
 
             if (aliveCount != 0)
             {
@@ -377,7 +377,7 @@ namespace CimCareMod.AI
             {
                 happiness -= happiness >> 2;
             }
-            Logger.LogInfo(Logger.LOG_SIMULATION, "NursingHomeAI.SimulationStepActive -- happiness: {0}", happiness);
+            Utils.Logger.LogInfo(Utils.Logger.LOG_SIMULATION, "NursingHomeAI.SimulationStepActive -- happiness: {0}", happiness);
 
             buildingData.m_health = (byte)health;
             buildingData.m_happiness = (byte)happiness;
@@ -467,8 +467,8 @@ namespace CimCareMod.AI
                 return;
             }
 
-            Logger.LogInfo(Logger.LOG_PRODUCTION, "------------------------------------------------------------");
-            Logger.LogInfo(Logger.LOG_PRODUCTION, "NursingHomeAI.ProduceGoods -- Family: {0}", string.Join(", ", Array.ConvertAll(familyWithSeniors, item => item.ToString())));
+            Utils.Logger.LogInfo(Utils.Logger.LOG_PRODUCTION, "------------------------------------------------------------");
+            Utils.Logger.LogInfo(Utils.Logger.LOG_PRODUCTION, "NursingHomeAI.ProduceGoods -- Family: {0}", string.Join(", ", Array.ConvertAll(familyWithSeniors, item => item.ToString())));
 
             // Check move in chance
             NumWorkers numWorkers = GetNumWorkers(ref behaviour);
@@ -482,7 +482,7 @@ namespace CimCareMod.AI
                 {
                     if (shouldMoveIn)
                     {
-                        Logger.LogInfo(Logger.LOG_PRODUCTION, "NursingHomeAI.ProduceGoods -- Moving In: {0}", familyMember);
+                        Utils.Logger.LogInfo(Utils.Logger.LOG_PRODUCTION, "NursingHomeAI.ProduceGoods -- Moving In: {0}", familyMember);
                         citizenManager.m_citizens.m_buffer[familyMember].SetHome(familyMember, buildingID, emptyRoom);
                     }
                     nursingHomeManager.DoneProcessingSenior(familyMember);
@@ -525,13 +525,13 @@ namespace CimCareMod.AI
         {
             int originalAmount = -(m_maintenanceCost * 100);
 
-            CimCareMod mod = CimCareMod.getInstance();
+            Mod mod = Mod.GetInstance();
             if (mod == null)
             {
                 return 0;
             }
 
-            OptionsManager optionsManager = mod.getOptionsManager();
+            OptionsManager optionsManager = mod.GetOptionsManager();
             if (optionsManager == null)
             {
                 return 0;
@@ -569,7 +569,7 @@ namespace CimCareMod.AI
             }
 
             Singleton<EconomyManager>.instance.m_EconomyWrapper.OnGetMaintenanceCost(ref amount, m_info.m_class.m_service, m_info.m_class.m_subService, m_info.m_class.m_level);
-            Logger.LogInfo(Logger.LOG_INCOME, "GetCustomMaintenanceCost - building: {0} - calculated maintenance amount: {1}", buildingData.m_buildIndex, amount);
+            Utils.Logger.LogInfo(Utils.Logger.LOG_INCOME, "GetCustomMaintenanceCost - building: {0} - calculated maintenance amount: {1}", buildingData.m_buildIndex, amount);
 
             return amount;
         }
@@ -586,7 +586,7 @@ namespace CimCareMod.AI
             int budget = Singleton<EconomyManager>.instance.GetBudget(m_info.m_class);
             amount /= 100;
             amount = productionRate * budget / 100 * amount / 100;
-            Logger.LogInfo(Logger.LOG_INCOME, "GetCustomMaintenanceCost - building: {0} - adjusted maintenance amount: {1}", buildingData.m_buildIndex, amount);
+            Utils.Logger.LogInfo(Utils.Logger.LOG_INCOME, "GetCustomMaintenanceCost - building: {0} - adjusted maintenance amount: {1}", buildingData.m_buildIndex, amount);
 
             if ((buildingData.m_flags & Building.Flags.Original) == Building.Flags.None && amount != 0)
             {
@@ -904,12 +904,12 @@ namespace CimCareMod.AI
 
         public void UpdateCapacity(float newCapacityModifier)
         {
-            Logger.LogInfo(Logger.LOG_OPTIONS, "NursingHomeAI.UpdateCapacity -- Updating capacity with modifier: {0}", newCapacityModifier);
+            Utils.Logger.LogInfo(Utils.Logger.LOG_OPTIONS, "NursingHomeAI.UpdateCapacity -- Updating capacity with modifier: {0}", newCapacityModifier);
             // Set the capcityModifier and check to see if the value actually changes
             if (Interlocked.Exchange(ref capacityModifier, newCapacityModifier) == newCapacityModifier)
             {
                 // Capcity has already been set to this value, nothing to do
-                Logger.LogInfo(Logger.LOG_OPTIONS, "NursingHomeAI.UpdateCapacity -- Skipping capacity change because the value was already set");
+                Utils.Logger.LogInfo(Utils.Logger.LOG_OPTIONS, "NursingHomeAI.UpdateCapacity -- Skipping capacity change because the value was already set");
                 return;
             }
         }
@@ -940,7 +940,7 @@ namespace CimCareMod.AI
                 citizenUnitIndex = nextCitizenUnitIndex;
             }
 
-            Logger.LogInfo(Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAi.ValidateCapacity -- Checking Expected Capacity {0} vs Current Capacity {1} for Building {2}", numRoomsExpected, numRoomsFound, buildingId);
+            Utils.Logger.LogInfo(Utils.Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAi.ValidateCapacity -- Checking Expected Capacity {0} vs Current Capacity {1} for Building {2}", numRoomsExpected, numRoomsFound, buildingId);
             // Check to see if the correct amount of rooms are present, otherwise adjust accordingly
             if (numRoomsFound == numRoomsExpected)
             {
@@ -962,7 +962,7 @@ namespace CimCareMod.AI
 
         private void CreateRooms(int numRoomsToCreate, ushort buildingId, ref Building data, uint lastCitizenUnitIndex)
         {
-            Logger.LogInfo(Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAI.CreateRooms -- Creating {0} Rooms", numRoomsToCreate);
+            Utils.Logger.LogInfo(Utils.Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAI.CreateRooms -- Creating {0} Rooms", numRoomsToCreate);
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
             citizenManager.CreateUnits(out uint firstUnit, ref Singleton<SimulationManager>.instance.m_randomizer, buildingId, (ushort)0, numRoomsToCreate, 0, 0, 0, 0);
             citizenManager.m_units.m_buffer[lastCitizenUnitIndex].m_nextUnit = firstUnit;
@@ -970,7 +970,7 @@ namespace CimCareMod.AI
 
         private void DeleteRooms(int numRoomsToDelete, ushort buildingId, ref Building data)
         {
-            Logger.LogInfo(Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAI.DeleteRooms -- Deleting {0} Rooms", numRoomsToDelete);
+            Utils.Logger.LogInfo(Utils.Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAI.DeleteRooms -- Deleting {0} Rooms", numRoomsToDelete);
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
 
             // Always start with the second to avoid loss of pointer from the building to the first unit
@@ -1004,7 +1004,7 @@ namespace CimCareMod.AI
                 return;
             }
 
-            Logger.LogInfo(Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAI.DeleteRooms -- Deleting {0} Occupied Rooms", numRoomsToDelete);
+            Utils.Logger.LogInfo(Utils.Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAI.DeleteRooms -- Deleting {0} Occupied Rooms", numRoomsToDelete);
             // Still need to delete more rooms so start deleting rooms with people in them...
             // Always start with the second to avoid loss of pointer from the building to the first unit
             prevUnit = data.m_citizenUnits;

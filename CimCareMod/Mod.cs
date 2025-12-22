@@ -6,13 +6,14 @@ using ColossalFramework;
 
 namespace CimCareMod
 {
-    public class CimCareMod : LoadingExtensionBase, IUserMod, ISerializableData  
+    public class Mod : LoadingExtensionBase, IUserMod, ISerializableData  
     {
-        private OptionsManager optionsManager = new();
+        private readonly OptionsManager optionsManager = new();
 
         public new IManagers managers { get; }
 
-        private static CimCareMod instance;
+        private static Mod instance;
+
         string IUserMod.Name => "Cim Care Mod";
 
         string IUserMod.Description => "Enables functionality for Nursing Home Assets and Orphanage Assets to function as working Nursing Homes and Orphanages";
@@ -28,12 +29,12 @@ namespace CimCareMod
             if (HarmonyHelper.IsHarmonyInstalled) Patcher.UnpatchAll();
         }
 
-        public static CimCareMod getInstance() 
+        public static Mod GetInstance() 
         {
             return instance;
         }
 
-        public OptionsManager getOptionsManager() 
+        public OptionsManager GetOptionsManager() 
         {
             return optionsManager;
         }

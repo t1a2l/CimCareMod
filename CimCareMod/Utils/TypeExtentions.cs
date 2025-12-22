@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace CimCareMod
+namespace CimCareMod.Utils
 {
     public static class TypeExtensions
     {
@@ -11,7 +11,7 @@ namespace CimCareMod
         {
             if (type == null)
             {
-                return Enumerable.Empty<FieldInfo>();
+                return [];
             }
             BindingFlags bindingAttr = BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
             if (type.BaseType != null)

@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using CimCareMod.Utils;
+using HarmonyLib;
 
 namespace CimCareMod.HarmonyPatches
 {

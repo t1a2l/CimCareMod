@@ -5,6 +5,7 @@ using ColossalFramework;
 using ColossalFramework.Math;
 using ICities;
 using CimCareMod.AI;
+using CimCareMod.Utils;
 
 namespace CimCareMod.Managers
 {
@@ -291,7 +292,7 @@ namespace CimCareMod.Managers
 
             // create an array of orphans to move out of the orphanage
             CitizenUnit orphanageRoom = citizenManager.m_units.m_buffer[orphanageRoomId];
-            uint[] orphanage_room = new uint[] { 0, 0, 0, 0, 0 };
+            uint[] orphanage_room = [0, 0, 0, 0, 0];
             for (int i = 0; i < 5; i++)
             {
                 uint orphanId = orphanageRoom.GetCitizen(i);

@@ -154,7 +154,6 @@ namespace CimCareMod.HarmonyPatches
                 for (int i = 0; i < serviceBuildings.m_size; i++)
                 {
                     BuildingInfo info = Singleton<BuildingManager>.instance.m_buildings.m_buffer[serviceBuildings[i]].Info;
-                    BuildingInfo homeBuildingInfo = Singleton<BuildingManager>.instance.m_buildings.m_buffer[citizen.m_homeBuilding].Info;
                     if (info != null)
                     {
                         if (IsChild(citizenID) && info.m_class.m_level == ItemClass.Level.Level4)

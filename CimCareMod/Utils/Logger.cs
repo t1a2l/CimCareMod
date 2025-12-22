@@ -1,7 +1,7 @@
 ﻿using System;
 using UnityEngine;
 
-namespace CimCareMod
+namespace CimCareMod.Utils
 {
     internal static class Logger
     {

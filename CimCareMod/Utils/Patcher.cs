@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using HarmonyLib;
 
-namespace CimCareMod
+namespace CimCareMod.Utils
 {
     public static class Patcher
     {
