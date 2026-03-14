@@ -9,10 +9,10 @@ namespace CimCareMod.HarmonyPatches
     public class AddFieldPatch
     {
         [HarmonyPatch(typeof(DecorationPropertiesPanel), "AddField",
-            [typeof(UIComponent), typeof(string), typeof(float), typeof(Type), typeof(string), typeof(int), typeof(object), typeof(object)],
-            [ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal])]
+            [typeof(UIComponent), typeof(string), typeof(float), typeof(Type), typeof(string), typeof(int), typeof(object), typeof(object), typeof(string)],
+            [ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal])]
         [HarmonyPrefix]
-        public static bool AddField(DecorationPropertiesPanel __instance, UIComponent container, string locale, float width, Type type, string name, int arrayIndex, object target, object initialValue)
+        public static bool AddField(DecorationPropertiesPanel __instance, UIComponent container, string locale, float width, Type type, string name, int arrayIndex, object target, object initialValue, string tooltipText = "")
 		{
 			if((target is NursingHomeAI || target is OrphanageAI) && name.StartsWith("m_workPlaceCount"))
             {
