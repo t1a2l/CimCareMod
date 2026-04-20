@@ -47,6 +47,7 @@ namespace CimCareMod
 
         public override void OnCreated(ILoading loading) 
         {
+            base.OnCreated(loading);
             Logger.LogInfo(Logger.LOG_BASE, "CimCareMod Created");
             instance = this;
         }
