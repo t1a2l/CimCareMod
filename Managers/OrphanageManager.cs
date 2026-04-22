@@ -137,7 +137,7 @@ namespace CimCareMod.Managers
                         }
                     }
                     num = nextUnit;
-                    if (++num2 > 524288)
+                    if (++num2 > Singleton<CitizenManager>.instance.m_units.m_size)
                     {
                         CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
                         break;

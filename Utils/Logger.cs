@@ -7,18 +7,18 @@ namespace CimCareMod.Utils
     {
         private static readonly string Prefix = "CimCareMod: ";
 
-        public static readonly bool LOG_BASE = false;
+        public static bool LOG_BASE = false;
 
-        public static readonly bool LOG_OPTIONS = false;
-        public static readonly bool LOG_CAPACITY_MANAGEMENT = false;
-        public static readonly bool LOG_INCOME = false;
-        public static readonly bool LOG_CHANCES = false;
+        public static bool LOG_OPTIONS = false;
+        public static bool LOG_CAPACITY_MANAGEMENT = false;
+        public static bool LOG_INCOME = false;
+        public static bool LOG_CHANCES = false;
 
-        public static readonly bool LOG_PRODUCTION = false;
-        public static readonly bool LOG_SIMULATION = false;
+        public static bool LOG_PRODUCTION = false;
+        public static bool LOG_SIMULATION = false;
 
-        public static readonly bool LOG_SENIORS = false;
-        public static readonly bool LOG_CHILDREN = false;
+        public static bool LOG_SENIORS = false;
+        public static bool LOG_CHILDREN = false;
 
         public static void LogInfo(bool shouldLog, string message, params object[] args)
         {

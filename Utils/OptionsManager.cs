@@ -48,6 +48,16 @@ namespace CimCareMod.Utils
             orphanagesIncomeDropDown = (UIDropDown)group.AddDropdown("Orphanages Income Modifier", ORPHANAGES_INCOME_LABELS, 2, HandleIncomeChange);
             group.AddSpace(5);
             group.AddButton("Save", SaveOptions);
+            UIHelperBase log_group = helper.AddGroup("Cim Care Logging");
+            log_group.AddCheckbox("Log Base Info", Logger.LOG_BASE, (value) => Logger.LOG_BASE = value);
+            log_group.AddCheckbox("Log Options Info", Logger.LOG_OPTIONS, (value) => Logger.LOG_OPTIONS = value);
+            log_group.AddCheckbox("Log Capacity Management Info", Logger.LOG_CAPACITY_MANAGEMENT, (value) => Logger.LOG_CAPACITY_MANAGEMENT = value);
+            log_group.AddCheckbox("Log Income Info", Logger.LOG_INCOME, (value) => Logger.LOG_INCOME = value);
+            log_group.AddCheckbox("Log Chances Info", Logger.LOG_CHANCES, (value) => Logger.LOG_CHANCES = value);
+            log_group.AddCheckbox("Log Production Info", Logger.LOG_PRODUCTION, (value) => Logger.LOG_PRODUCTION = value);
+            log_group.AddCheckbox("Log Simulation Info", Logger.LOG_SIMULATION, (value) => Logger.LOG_SIMULATION = value);
+            log_group.AddCheckbox("Log Seniors Info", Logger.LOG_SENIORS, (value) => Logger.LOG_SENIORS = value);
+            log_group.AddCheckbox("Log Children Info", Logger.LOG_CHILDREN, (value) => Logger.LOG_CHILDREN = value);
         }
 
         private void HandleCapacityChange(int newSelection)

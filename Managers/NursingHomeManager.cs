@@ -118,7 +118,8 @@ namespace CimCareMod.Managers
                         for (int j = 0; j < 5; j++)
                         {
                             uint citizenId = citizenUnit.GetCitizen(j);
-                            if (citizenManager.m_citizens.m_buffer[citizenId].m_flags.IsFlagSet(Citizen.Flags.Created) && IsSenior(citizenId) && ValidateSeniorCitizen(citizenId))
+                            Citizen citizen = citizenManager.m_citizens.m_buffer[citizenId];
+                            if (citizen.m_flags.IsFlagSet(Citizen.Flags.Created) && ValidateSeniorCitizen(citizenId) && IsMovingIn(citizenId))
                             {
                                 familiesWithSeniors.Add(num);
                                 break;
@@ -126,7 +127,7 @@ namespace CimCareMod.Managers
                         }
                     }
                     num = nextUnit;
-                    if (++num2 > 524288)
+                    if (++num2 > Singleton<CitizenManager>.instance.m_units.m_size)
                     {
                         CODebugBase<LogChannel>.Error(LogChannel.Core, "Invalid list detected!\n" + Environment.StackTrace);
                         break;
@@ -251,9 +252,9 @@ namespace CimCareMod.Managers
                 return false;
             }
 
-            // Validate Age
-            int age = citizenManager.m_citizens.m_buffer[seniorCitizenId].Age;
-            if (age <= Citizen.AGE_LIMIT_ADULT || age >= Citizen.AGE_LIMIT_SENIOR)
+            // Validate is senior
+            Citizen.AgeGroup age_group = Citizen.GetAgeGroup(citizenManager.m_citizens.m_buffer[seniorCitizenId].Age);
+            if (age_group != Citizen.AgeGroup.Senior)
             {
                 return false;
             }
@@ -278,6 +279,32 @@ namespace CimCareMod.Managers
 
             // Validate not already living in a nursing home
             if (buildingManager.m_buildings.m_buffer[homeBuildingId].Info.m_buildingAI is NursingHomeAI)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool IsMovingIn(uint citizenId)
+        {
+            if (!IsSenior(citizenId))
+            {
+                return false;
+            }
+
+            ushort homeBuildingId = citizenManager.m_citizens.m_buffer[citizenId].m_homeBuilding;
+
+            // no home move to nursing home
+            if (homeBuildingId == 0)
+            {
+                return true;
+            }
+
+            Building homeBuilding = buildingManager.m_buildings.m_buffer[homeBuildingId];
+
+            // if already living in an nursing home
+            if (homeBuilding.Info.m_buildingAI is NursingHomeAI)
             {
                 return false;
             }
