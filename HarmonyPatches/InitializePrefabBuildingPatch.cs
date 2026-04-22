@@ -62,6 +62,10 @@ namespace CimCareMod.HarmonyPatches
                         buildingInfo.m_class = elderCareBuildingInfo.m_class;
                         nursingHomeAI.UpdateCapacity(elderCareCapcityModifier);
                         buildingInfo.m_placementMode = BuildingInfo.PlacementMode.Roadside;
+                        if(buildingInfo.m_class.m_level != ItemClass.Level.Level5)
+                        {
+                            buildingInfo.m_class.m_level = ItemClass.Level.Level5;
+                        }
                     }
                 }
             }
