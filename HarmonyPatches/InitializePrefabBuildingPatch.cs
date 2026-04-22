@@ -35,37 +35,28 @@ namespace CimCareMod.HarmonyPatches
             }
         }
 
-        public static void Postfix()
+        public static void Postfix(BuildingInfo __instance)
         {
             try
             {
-                BuildingInfo childCareBuildingInfo = PrefabCollection<BuildingInfo>.FindLoaded("Child Health Center 01");
-                BuildingInfo elderCareBuildingInfo = PrefabCollection<BuildingInfo>.FindLoaded("Eldercare 01");
-
-                float childCareCapcityModifier = Mod.GetInstance().GetOptionsManager().GetOrphanagesCapacityModifier();
-                float elderCareCapcityModifier = Mod.GetInstance().GetOptionsManager().GetNursingHomesCapacityModifier();
-
-                uint index = 0U;
-                for (; PrefabCollection<BuildingInfo>.LoadedCount() > index; ++index) 
+                if (__instance.GetAI() is OrphanageAI orphanagAI)
                 {
-                    BuildingInfo buildingInfo = PrefabCollection<BuildingInfo>.GetLoaded(index);
-
-                    // Check for replacement of AI
-                    if (buildingInfo != null && buildingInfo.GetAI() is OrphanageAI orphanagAI)
+                    BuildingInfo childCareBuildingInfo = PrefabCollection<BuildingInfo>.FindLoaded("Child Health Center 01");
+                    float childCareCapcityModifier = Mod.GetInstance().GetOptionsManager().GetOrphanagesCapacityModifier();
+                    __instance.m_class = childCareBuildingInfo.m_class;
+                    orphanagAI.UpdateCapacity(childCareCapcityModifier);
+                    __instance.m_placementMode = BuildingInfo.PlacementMode.Roadside;
+                }
+                else if (__instance.GetAI() is NursingHomeAI nursingHomeAI)
+                {
+                    BuildingInfo elderCareBuildingInfo = PrefabCollection<BuildingInfo>.FindLoaded("Eldercare 01");
+                    float elderCareCapcityModifier = Mod.GetInstance().GetOptionsManager().GetNursingHomesCapacityModifier();
+                    __instance.m_class = elderCareBuildingInfo.m_class;
+                    nursingHomeAI.UpdateCapacity(elderCareCapcityModifier);
+                    __instance.m_placementMode = BuildingInfo.PlacementMode.Roadside;
+                    if (__instance.m_class.m_level != ItemClass.Level.Level5)
                     {
-                        buildingInfo.m_class = childCareBuildingInfo.m_class;
-                        orphanagAI.UpdateCapacity(childCareCapcityModifier);
-                        buildingInfo.m_placementMode = BuildingInfo.PlacementMode.Roadside;
-                    }
-                    else if (buildingInfo != null && buildingInfo.GetAI() is NursingHomeAI nursingHomeAI)
-                    {
-                        buildingInfo.m_class = elderCareBuildingInfo.m_class;
-                        nursingHomeAI.UpdateCapacity(elderCareCapcityModifier);
-                        buildingInfo.m_placementMode = BuildingInfo.PlacementMode.Roadside;
-                        if(buildingInfo.m_class.m_level != ItemClass.Level.Level5)
-                        {
-                            buildingInfo.m_class.m_level = ItemClass.Level.Level5;
-                        }
+                        __instance.m_class.m_level = ItemClass.Level.Level5;
                     }
                 }
             }
