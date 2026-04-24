@@ -83,7 +83,7 @@ namespace CimCareMod.Managers
             int combinedAge = 0;
             foreach (uint familyMember in familyWithChildren)
             {
-                if (orphanageManager.IsChild(familyMember))
+                if (orphanageManager.IsChildOrTeen(familyMember))
                 {
                     numChildren++;
                     combinedAge += citizenManager.m_citizens.m_buffer[familyMember].Age;

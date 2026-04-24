@@ -476,7 +476,7 @@ namespace CimCareMod.AI
                 List<uint> childrenList = [];
                 foreach (uint familyMember in familyWithChildren)
                 {
-                    if (orphanageManager.IsChild(familyMember))
+                    if (orphanageManager.IsChildOrTeen(familyMember))
                     {
                         Utils.Logger.LogInfo(Utils.Logger.LOG_PRODUCTION, "OrphanageAI.ProduceGoods -- familyMember: {0} is a child", familyMember);
                         childrenList.Add(familyMember);
