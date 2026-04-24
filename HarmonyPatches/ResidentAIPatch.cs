@@ -2,7 +2,6 @@
 using HarmonyLib;
 using UnityEngine;
 using CimCareMod.AI;
-using ColossalFramework.Math;
 
 namespace CimCareMod.HarmonyPatches
 {
@@ -14,56 +13,11 @@ namespace CimCareMod.HarmonyPatches
         [HarmonyPrefix]
         public static bool Spawn(ResidentAI __instance, ushort instanceID, ref CitizenInstance data)
         {
-	        if ((data.m_flags & CitizenInstance.Flags.Character) != 0)
-	        {
-		        return false;
-	        }
-	        data.Spawn(instanceID);
-	        uint citizenId = data.m_citizen;
-	        ushort targetBuilding = data.m_targetBuilding;
-	        if (citizenId == 0 || targetBuilding == 0)
-	        {
-		        return false;
-	        }
-	        Randomizer r = new(citizenId);
-	        if (r.Int32(20u) != 0)
-	        {
-		        return false;
-	        }
-	        CitizenManager instance = Singleton<CitizenManager>.instance;
-	        DistrictManager instance2 = Singleton<DistrictManager>.instance;
-	        Vector3 position;
-	        if ((data.m_flags & CitizenInstance.Flags.TargetIsNode) != 0)
-	        {
-		        NetManager instance3 = Singleton<NetManager>.instance;
-		        position = instance3.m_nodes.m_buffer[targetBuilding].m_position;
-	        }
-	        else
-	        {
-		        BuildingManager instance4 = Singleton<BuildingManager>.instance;
-		        position = instance4.m_buildings.m_buffer[targetBuilding].m_position;
-	        }
-	        byte district = instance2.GetDistrict(data.m_targetPos);
-	        byte district2 = instance2.GetDistrict(position);
-	        DistrictPolicies.Services servicePolicies = instance2.m_districts.m_buffer[district].m_servicePolicies;
-	        DistrictPolicies.Services servicePolicies2 = instance2.m_districts.m_buffer[district2].m_servicePolicies;
-            Citizen citizen = instance.m_citizens.m_buffer[citizenId];
-            Building homeBuilding = Singleton<BuildingManager>.instance.m_buildings.m_buffer[citizen.m_homeBuilding];
-
-            var pet_ban = ((servicePolicies | servicePolicies2) & DistrictPolicies.Services.PetBan) != 0;
-            var orphanage_child = IsChild(citizenId) && homeBuilding.Info.GetAI() is OrphanageAI;
-            var nursing_home_senior = IsSenior(citizenId) && homeBuilding.Info.GetAI() is NursingHomeAI;
-
-	        if (!pet_ban && !orphanage_child && !nursing_home_senior)
-	        {
-		        CitizenInfo groupAnimalInfo = instance.GetGroupAnimalInfo(ref r, __instance.m_info.m_class.m_service, __instance.m_info.m_class.m_subService);
-		        if (groupAnimalInfo != null && instance.CreateCitizenInstance(out var instance5, ref r, groupAnimalInfo, 0u))
-		        {
-			        groupAnimalInfo.m_citizenAI.SetSource(instance5, ref instance.m_instances.m_buffer[instance5], instanceID);
-			        groupAnimalInfo.m_citizenAI.SetTarget(instance5, ref instance.m_instances.m_buffer[instance5], instanceID);
-		        }
-	        }
-            return false;
+            if (BlockAnimalSpawn(data.m_citizen))
+            {
+                return false;
+            }
+            return true;
         }
 
 		// Overwrite the base games FindHospital function with our own fixed version.
@@ -147,7 +101,7 @@ namespace CimCareMod.HarmonyPatches
             if (Singleton<CitizenManager>.exists &&
                 Singleton<CitizenManager>.instance != null &&
                 citizen.m_health >= 40 &&
-                (IsChild(citizenID) || IsSenior(citizenID)))
+                (IsChildorTeen(citizenID) || IsSenior(citizenID)))
             {
                 TransferManager.TransferReason reason = TransferManager.TransferReason.None;
                 FastList<ushort> serviceBuildings = Singleton<BuildingManager>.instance.GetServiceBuildings(ItemClass.Service.HealthCare);
@@ -156,7 +110,7 @@ namespace CimCareMod.HarmonyPatches
                     BuildingInfo info = Singleton<BuildingManager>.instance.m_buildings.m_buffer[serviceBuildings[i]].Info;
                     if (info != null)
                     {
-                        if (IsChild(citizenID) && info.m_class.m_level == ItemClass.Level.Level4)
+                        if (IsChildorTeen(citizenID) && info.m_class.m_level == ItemClass.Level.Level4)
                         {
                             if(serviceBuildings[i] == citizen.m_homeBuilding && info.GetAI() is OrphanageAI)
                             {
@@ -190,7 +144,50 @@ namespace CimCareMod.HarmonyPatches
             return false;
         }
 
-		private static bool IsChild(uint citizenID)
+        private static bool BlockAnimalSpawn(uint citizenId)
+        {
+            if(!IsChildorTeen(citizenId) && !IsSenior(citizenId))
+            {
+                return false;
+            }
+
+            CitizenManager citizenManager = Singleton<CitizenManager>.instance;
+            BuildingManager buildingManager = Singleton<BuildingManager>.instance;
+            if (citizenManager == null || buildingManager == null)
+            {
+                return false;
+            }
+
+            Citizen citizen = citizenManager.m_citizens.m_buffer[citizenId];
+
+            if (citizen.m_homeBuilding == 0)
+            {
+                return false;
+            }
+
+            Building homeBuilding = buildingManager.m_buildings.m_buffer[citizen.m_homeBuilding];
+
+            if ((homeBuilding.m_flags & Building.Flags.Created) == 0)
+            {
+                return false;
+            }
+
+            var info = homeBuilding.Info;
+            if (info == null)
+            {
+                return false;
+            }
+
+            var ai = info.GetAI();
+            if (ai is not NursingHomeAI && ai is not OrphanageAI)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+		private static bool IsChildorTeen(uint citizenID)
 		{
 			return Citizen.GetAgeGroup(Singleton<CitizenManager>.instance.m_citizens.m_buffer[citizenID].Age) == Citizen.AgeGroup.Child || Citizen.GetAgeGroup(Singleton<CitizenManager>.instance.m_citizens.m_buffer[citizenID].Age) == Citizen.AgeGroup.Teen;
 		}
