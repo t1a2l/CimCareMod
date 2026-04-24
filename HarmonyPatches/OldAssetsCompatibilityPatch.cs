@@ -11,7 +11,7 @@ namespace CimCareMod.HarmonyPatches
         public static void Postfix(ref string __result)
 	    {
             string[] temp = __result.Split(',');
-            if(temp[1] == " SeniorCitizenCenterMod")
+            if(temp != null && temp.Length > 1 && temp[1].Trim() == "SeniorCitizenCenterMod")
             {
                 if(temp[0] == "SeniorCitizenCenterMod.NursingHomeAi" || temp[0] == "SeniorCitizenCenterMod.NursingHomeAI")
                 {
