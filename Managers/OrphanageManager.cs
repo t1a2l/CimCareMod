@@ -437,7 +437,6 @@ namespace CimCareMod.Managers
                 return true;
             }
 
-            // if this child is living in an orphanage we should check the entire room
             ushort homeBuildingId = citizenManager.m_citizens.m_buffer[citizenId].m_homeBuilding;
 
             if (homeBuildingId == 0)
@@ -457,7 +456,7 @@ namespace CimCareMod.Managers
                 return false;
             }
 
-
+            // if this child or teen is living in an orphanage we should check the entire room
             if (homeBuilding.Info.m_buildingAI is OrphanageAI)
             {
                 return true;
