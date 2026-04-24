@@ -31,6 +31,7 @@ namespace CimCareMod.Managers
         private const int BuildingStepSize = 192;
         private ushort orphanCheckStep;
 
+        private readonly int orphanCheckFramesInterval = 60;
         private int orphanCheckCounter;
 
         public OrphanageManager()
@@ -77,17 +78,22 @@ namespace CimCareMod.Managers
                 return;
             }
 
-            if (Interlocked.CompareExchange(ref running, 1, 0) == 1)
+            if (Interlocked.CompareExchange(ref running, 1, 0) != 0)
             {
                 return;
             }
 
-            ushort step = orphanCheckStep;
-            orphanCheckStep = (ushort)((step + 1) & StepMask);
-
-            RefreshChildren(step);
-
-            running = 0;
+            try
+            {
+                ushort step = orphanCheckStep;
+                orphanCheckStep = (ushort)((step + 1) & StepMask);
+                orphanCheckCounter = orphanCheckFramesInterval;
+                RefreshChildren(step);
+            }
+            finally
+            {
+                Interlocked.Exchange(ref running, 0);
+            }
         }
 
         private void RefreshChildren(ushort step)
@@ -100,11 +106,20 @@ namespace CimCareMod.Managers
             for (ushort i = first; i <= last; ++i)
             {
                 var building = buildingManager.m_buildings.m_buffer[i];
-                if (building.Info.GetAI() is not ResidentialBuildingAI && building.Info.GetAI() is not OrphanageAI)
+
+                if ((building.m_flags & Building.Flags.Created) == 0)
                 {
                     continue;
                 }
-                if ((building.m_flags & Building.Flags.Created) == 0)
+
+                var info = building.Info;
+                if (info == null)
+                {
+                    continue;
+                }
+
+                var ai = info.GetAI();
+                if (ai is not ResidentialBuildingAI && ai is not OrphanageAI)
                 {
                     continue;
                 }
@@ -121,7 +136,7 @@ namespace CimCareMod.Managers
                         {
                             uint citizenId = citizenUnit.GetCitizen(j);
                             Citizen citizen = citizenManager.m_citizens.m_buffer[citizenId];
-                            if (citizen.m_flags.IsFlagSet(Citizen.Flags.Created) && ValidateChild(citizenId))
+                            if (citizen.m_flags.IsFlagSet(Citizen.Flags.Created) && ValidateChildOrTeen(citizenId))
                             {
                                 if (IsMovingIn(citizenId))
                                 {
@@ -177,7 +192,7 @@ namespace CimCareMod.Managers
             // Mark all children in the family as being processed
             foreach (uint familyMember in family)
             {
-                if (IsChild(familyMember))
+                if (IsChildOrTeen(familyMember))
                 {
                     childrenBeingProcessed.Add(familyMember);
                 }
@@ -209,7 +224,7 @@ namespace CimCareMod.Managers
             // Mark orphan as being processed
             foreach (uint orphan in orphanage_room)
             {
-                if (IsChild(orphan))
+                if (IsChildOrTeen(orphan))
                 {
                     childrenBeingProcessed.Add(orphan);
                 }
@@ -250,9 +265,9 @@ namespace CimCareMod.Managers
             for (int i = 0; i < 5; i++)
             {
                 uint familyMember = familyWithChildren.GetCitizen(i);
-                if (IsChild(familyMember))
+                if (IsChildOrTeen(familyMember))
                 {
-                    if (!ValidateChild(familyMember))
+                    if (!ValidateChildOrTeen(familyMember))
                     {
                         // This particular Child is no longer valid for some reason, call recursively with one less attempt
                         return GetFamilyWithChildrenInternal(--numAttempts);
@@ -298,9 +313,9 @@ namespace CimCareMod.Managers
                 uint orphanId = orphanageRoom.GetCitizen(i);
                 Logger.LogInfo(Logger.LOG_CHILDREN, "OrphanageManager.GetOrphanesRoomInternal -- Family Member: {0}", orphanId);
                 // not a child anymore -> move out
-                if (orphanId != 0 && !IsChild(orphanId))
+                if (orphanId != 0 && !IsChildOrTeen(orphanId))
                 {
-                    if (!ValidateChild(orphanId))
+                    if (!ValidateChildOrTeen(orphanId))
                     {
                         // This particular student is already being processed
                         return GetOrphanesRoomInternal(--numAttempts);
@@ -340,18 +355,7 @@ namespace CimCareMod.Managers
             return family;
         }
 
-        private bool ValidateChild(uint childId)
-        {
-            // Validate this Child is not already being processed
-            if (childrenBeingProcessed.Contains(childId))
-            {
-                return false; // being processed 
-            }
-
-            return true; // not being processed
-        }
-
-        public bool IsChild(uint childId)
+        public bool IsChildOrTeen(uint childId)
         {
             if (childId == 0)
             {
@@ -364,7 +368,7 @@ namespace CimCareMod.Managers
                 return false;
             }
 
-            // Validate is child or teenager
+            // Validate that the citizen is a child or a teenager
             Citizen.AgeGroup age_group = Citizen.GetAgeGroup(citizenManager.m_citizens.m_buffer[childId].Age);
             if (age_group != Citizen.AgeGroup.Child && age_group != Citizen.AgeGroup.Teen)
             {
@@ -374,9 +378,25 @@ namespace CimCareMod.Managers
             return true;
         }
 
+        private bool ValidateChildOrTeen(uint orphanId)
+        {
+            if (orphanId == 0)
+            {
+                return false;
+            }
+
+            // Validate that this Child or Teen is not already being processed
+            if (childrenBeingProcessed.Contains(orphanId))
+            {
+                return false; // being processed 
+            }
+
+            return true; // not being processed
+        }
+
         private bool IsMovingIn(uint citizenId)
         {
-            if (!IsChild(citizenId))
+            if (!IsChildOrTeen(citizenId))
             {
                 return false;
             }
@@ -391,6 +411,16 @@ namespace CimCareMod.Managers
 
             Building homeBuilding = buildingManager.m_buildings.m_buffer[homeBuildingId];
 
+            if ((homeBuilding.m_flags & Building.Flags.Created) == 0)
+            {
+                return true;
+            }
+
+            if (homeBuilding.Info == null)
+            {
+                return true;
+            }
+
             // if already living in an orphanage
             if (homeBuilding.Info.m_buildingAI is OrphanageAI)
             {
@@ -402,9 +432,32 @@ namespace CimCareMod.Managers
 
         private bool IsMovingOut(uint citizenId)
         {
+            if (!IsChildOrTeen(citizenId))
+            {
+                return true;
+            }
+
             // if this child is living in an orphanage we should check the entire room
             ushort homeBuildingId = citizenManager.m_citizens.m_buffer[citizenId].m_homeBuilding;
+
+            if (homeBuildingId == 0)
+            {
+                return false;
+            }
+
             Building homeBuilding = buildingManager.m_buildings.m_buffer[homeBuildingId];
+
+            if ((homeBuilding.m_flags & Building.Flags.Created) == 0)
+            {
+                return false;
+            }
+
+            if (homeBuilding.Info == null)
+            {
+                return false;
+            }
+
+
             if (homeBuilding.Info.m_buildingAI is OrphanageAI)
             {
                 return true;
@@ -412,7 +465,5 @@ namespace CimCareMod.Managers
 
             return false;
         }
-
-
     }
 }

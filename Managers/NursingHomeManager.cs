@@ -30,6 +30,7 @@ namespace CimCareMod.Managers
         private const int BuildingStepSize = 192;
         private ushort seniorCheckStep;
 
+        private readonly int seniorCheckFramesInterval = 60;
         private int seniorCheckCounter;
 
         public NursingHomeManager()
@@ -75,17 +76,22 @@ namespace CimCareMod.Managers
                 return;
             }
 
-            if (Interlocked.CompareExchange(ref running, 1, 0) == 1)
+            if (Interlocked.CompareExchange(ref running, 1, 0) != 0)
             {
                 return;
             }
 
-            ushort step = seniorCheckStep;
-            seniorCheckStep = (ushort)((step + 1) & StepMask);
-
-            RefreshSeniorCitizens(step);
-
-            running = 0;
+            try
+            {
+                ushort step = seniorCheckStep;
+                seniorCheckStep = (ushort)((step + 1) & StepMask);
+                seniorCheckCounter = seniorCheckFramesInterval;
+                RefreshSeniorCitizens(step);
+            }
+            finally
+            {
+                Interlocked.Exchange(ref running, 0);
+            }
         }
 
         private void RefreshSeniorCitizens(ushort step)
@@ -98,14 +104,23 @@ namespace CimCareMod.Managers
             for (ushort i = first; i <= last; ++i)
             {
                 var building = buildingManager.m_buildings.m_buffer[i];
-                if (building.Info.GetAI() is not ResidentialBuildingAI && building.Info.GetAI() is not NursingHomeAI)
-                {
-                    continue;
-                }
+
                 if ((building.m_flags & Building.Flags.Created) == 0)
                 {
                     continue;
                 }
+
+                var info = building.Info;
+                if (info == null)
+                {
+                    continue;
+                }
+
+                var ai = info.GetAI();
+                if (ai is not ResidentialBuildingAI && ai is not NursingHomeAI)
+                {
+                    continue;
+                }              
 
                 uint num = building.m_citizenUnits;
                 int num2 = 0;
@@ -118,6 +133,12 @@ namespace CimCareMod.Managers
                         for (int j = 0; j < 5; j++)
                         {
                             uint citizenId = citizenUnit.GetCitizen(j);
+
+                            if(citizenId == 0) 
+                            {
+                                continue;
+                            }
+
                             Citizen citizen = citizenManager.m_citizens.m_buffer[citizenId];
                             if (citizen.m_flags.IsFlagSet(Citizen.Flags.Created) && ValidateSeniorCitizen(citizenId) && IsMovingIn(citizenId))
                             {
@@ -264,26 +285,18 @@ namespace CimCareMod.Managers
 
         private bool ValidateSeniorCitizen(uint seniorCitizenId)
         {
-            // Validate this Senior is not already being processed
+            if (seniorCitizenId == 0)
+            {
+                return false;
+            }
+
+            // Validate that this Senior is not already being processed
             if (seniorCitizensBeingProcessed.Contains(seniorCitizenId))
             {
-                return false;
+                return false;  // being processed 
             }
 
-            // Validate not homeless
-            ushort homeBuildingId = citizenManager.m_citizens.m_buffer[seniorCitizenId].m_homeBuilding;
-            if (homeBuildingId == 0)
-            {
-                return false;
-            }
-
-            // Validate not already living in a nursing home
-            if (buildingManager.m_buildings.m_buffer[homeBuildingId].Info.m_buildingAI is NursingHomeAI)
-            {
-                return false;
-            }
-
-            return true;
+            return true;  // not being processed
         }
 
         private bool IsMovingIn(uint citizenId)
@@ -302,6 +315,16 @@ namespace CimCareMod.Managers
             }
 
             Building homeBuilding = buildingManager.m_buildings.m_buffer[homeBuildingId];
+
+            if ((homeBuilding.m_flags & Building.Flags.Created) == 0)
+            {
+                return true;
+            }
+
+            if (homeBuilding.Info == null)
+            {
+                return true;
+            }
 
             // if already living in an nursing home
             if (homeBuilding.Info.m_buildingAI is NursingHomeAI)
