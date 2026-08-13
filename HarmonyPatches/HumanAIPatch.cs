@@ -22,7 +22,7 @@ namespace CimCareMod.HarmonyPatches
             }
 			else if(reason == TransferManager.TransferReason.ChildCare)
             {
-				if(IsChild(citizenID) && homeBuildingInfo.GetAI() is OrphanageAI)
+				if(IsChildOrTeen(citizenID) && homeBuildingInfo.GetAI() is OrphanageAI)
                 {
 					return false;
                 }
@@ -35,7 +35,7 @@ namespace CimCareMod.HarmonyPatches
 			return Citizen.GetAgeGroup(Singleton<CitizenManager>.instance.m_citizens.m_buffer[citizenID].Age) == Citizen.AgeGroup.Senior;
 		}
 
-		private static bool IsChild(uint citizenID)
+		private static bool IsChildOrTeen(uint citizenID)
 		{
 			return Citizen.GetAgeGroup(Singleton<CitizenManager>.instance.m_citizens.m_buffer[citizenID].Age) == Citizen.AgeGroup.Child || Citizen.GetAgeGroup(Singleton<CitizenManager>.instance.m_citizens.m_buffer[citizenID].Age) == Citizen.AgeGroup.Teen;
 		}

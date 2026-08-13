@@ -119,7 +119,22 @@ namespace CimCareMod.Managers
                 }
 
                 var ai = info.GetAI();
+                CitizenUnit.Flags flags = CitizenUnit.Flags.None;
                 if (ai is not ResidentialBuildingAI && ai is not OrphanageAI)
+                {
+                    continue;
+                }
+
+                if(ai is ResidentialBuildingAI)
+                {
+                    flags = CitizenUnit.Flags.Home;
+                }
+                else if (ai is OrphanageAI)
+                {
+                    flags = (CitizenUnit.Flags)CimCareFlags.Orphanage;
+                }
+
+                if(flags == CitizenUnit.Flags.None)
                 {
                     continue;
                 }
@@ -130,7 +145,7 @@ namespace CimCareMod.Managers
                 {
                     var citizenUnit = instance.m_units.m_buffer[num];
                     uint nextUnit = citizenUnit.m_nextUnit;
-                    if ((instance.m_units.m_buffer[num].m_flags & CitizenUnit.Flags.Home) != 0 && !citizenUnit.Empty())
+                    if ((instance.m_units.m_buffer[num].m_flags & flags) != 0 && !citizenUnit.Empty())
                     {
                         for (int j = 0; j < 5; j++)
                         {

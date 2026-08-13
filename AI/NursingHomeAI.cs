@@ -162,7 +162,7 @@ namespace CimCareMod.AI
             }
             base.CreateBuilding(buildingID, ref data);
             int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
-            Singleton<CitizenManager>.instance.CreateUnits(out data.m_citizenUnits, ref Singleton<SimulationManager>.instance.m_randomizer, buildingID, 0, GetModifiedCapacity(), workCount, 0, 0, 0);
+            CitizenUnits.CreateUnits(out data.m_citizenUnits, ref Singleton<SimulationManager>.instance.m_randomizer, (CitizenUnit.Flags)CimCareFlags.NursingHome, buildingID, GetModifiedCapacity(), workCount);
         }
 
         public override void BuildingLoaded(ushort buildingID, ref Building data, uint version)
@@ -175,7 +175,7 @@ namespace CimCareMod.AI
             ValidateCapacity(buildingID, ref data, false);
 
             int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
-            EnsureCitizenUnits(buildingID, ref data, GetModifiedCapacity(), workCount, 0, 0);
+            CitizenUnits.EnsureCitizenUnits(buildingID, ref data, (CitizenUnit.Flags)CimCareFlags.NursingHome, GetModifiedCapacity(), workCount);
         }
 
         public override void EndRelocating(ushort buildingID, ref Building data)
@@ -188,7 +188,7 @@ namespace CimCareMod.AI
             ValidateCapacity(buildingID, ref data, false);
 
             int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
-            EnsureCitizenUnits(buildingID, ref data, GetModifiedCapacity(), workCount, 0, 0);
+            CitizenUnits.EnsureCitizenUnits(buildingID, ref data, (CitizenUnit.Flags)CimCareFlags.NursingHome, GetModifiedCapacity(), workCount);
         }
 
         protected override void ManualActivation(ushort buildingID, ref Building buildingData)
@@ -271,7 +271,7 @@ namespace CimCareMod.AI
             int aliveHomeCount = 0;
             int emptyHomeCount = 0;
 
-            GetHomeBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveCount, ref totalCount, ref homeCount, ref aliveHomeCount, ref emptyHomeCount);
+            CitizenUnits.GetCimCareFlagsBehaviour(buildingID, ref buildingData, ref behaviour, (CitizenUnit.Flags)CimCareFlags.NursingHome, ref aliveCount, ref totalCount, ref homeCount, ref aliveHomeCount, ref emptyHomeCount);
             GetWorkBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveWorkerCount, ref totalWorkerCount);
 
             DistrictManager districtManager = Singleton<DistrictManager>.instance;
@@ -483,7 +483,7 @@ namespace CimCareMod.AI
                     if (shouldMoveIn)
                     {
                         Utils.Logger.LogInfo(Utils.Logger.LOG_PRODUCTION, "NursingHomeAI.ProduceGoods -- Moving In: {0}", familyMember);
-                        citizenManager.m_citizens.m_buffer[familyMember].SetHome(familyMember, buildingID, emptyRoom);
+                        CitizenUnits.SetHome(familyMember, buildingID, emptyRoom, "In", (CitizenUnit.Flags)CimCareFlags.NursingHome);
                     }
                     nursingHomeManager.DoneProcessingSenior(familyMember);
                 }
@@ -602,7 +602,7 @@ namespace CimCareMod.AI
             while (citizenUnitIndex != 0)
             {
                 uint nextCitizenUnitIndex = citizenManager.m_units.m_buffer[citizenUnitIndex].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
+                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & (CitizenUnit.Flags)CimCareFlags.NursingHome) != CitizenUnit.Flags.None)
                 {
                     if (citizenManager.m_units.m_buffer[citizenUnitIndex].Empty())
                     {
@@ -641,7 +641,7 @@ namespace CimCareMod.AI
             while (citizenUnit != 0)
             {
                 uint num5 = citizenManager.m_units.m_buffer[citizenUnit].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnit].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
+                if ((citizenManager.m_units.m_buffer[citizenUnit].m_flags & (CitizenUnit.Flags)CimCareFlags.NursingHome) != CitizenUnit.Flags.None)
                 {
                     int residentRequirement1 = 0;
                     int residentRequirement2 = 0;
@@ -779,6 +779,7 @@ namespace CimCareMod.AI
                     return 0f;
             }
         }
+        
         public override float GetEventImpact(ushort buildingID, ref Building data, NaturalResourceManager.Resource resource, float amount)
         {
             if ((data.m_flags & (Building.Flags.Abandoned | Building.Flags.BurnedDown)) != Building.Flags.None)
@@ -876,7 +877,7 @@ namespace CimCareMod.AI
             while (citizenUnitIndex != 0)
             {
                 uint nextCitizenUnitIndex = citizenManager.m_units.m_buffer[citizenUnitIndex].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
+                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & (CitizenUnit.Flags)CimCareFlags.NursingHome) != CitizenUnit.Flags.None)
                 {
                     bool occupied = false;
                     for (int index = 0; index < 5; ++index)
@@ -932,7 +933,7 @@ namespace CimCareMod.AI
             while (citizenUnitIndex != 0)
             {
                 uint nextCitizenUnitIndex = citizenManager.m_units.m_buffer[citizenUnitIndex].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
+                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & (CitizenUnit.Flags)CimCareFlags.NursingHome) != CitizenUnit.Flags.None)
                 {
                     numRoomsFound++;
                 }
@@ -956,7 +957,7 @@ namespace CimCareMod.AI
             }
             else
             {
-                DeleteRooms((numRoomsFound - numRoomsExpected), buildingId, ref data);
+                DeleteRooms(numRoomsFound - numRoomsExpected, ref data);
             }
         }
 
@@ -964,11 +965,11 @@ namespace CimCareMod.AI
         {
             Utils.Logger.LogInfo(Utils.Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAI.CreateRooms -- Creating {0} Rooms", numRoomsToCreate);
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
-            citizenManager.CreateUnits(out uint firstUnit, ref Singleton<SimulationManager>.instance.m_randomizer, buildingId, (ushort)0, numRoomsToCreate, 0, 0, 0, 0);
+            CitizenUnits.CreateUnits(out uint firstUnit, ref Singleton<SimulationManager>.instance.m_randomizer, (CitizenUnit.Flags)CimCareFlags.NursingHome, buildingId, numRoomsToCreate, 0);
             citizenManager.m_units.m_buffer[lastCitizenUnitIndex].m_nextUnit = firstUnit;
         }
 
-        private void DeleteRooms(int numRoomsToDelete, ushort buildingId, ref Building data)
+        private void DeleteRooms(int numRoomsToDelete, ref Building data)
         {
             Utils.Logger.LogInfo(Utils.Logger.LOG_CAPACITY_MANAGEMENT, "NursingHomeAI.DeleteRooms -- Deleting {0} Rooms", numRoomsToDelete);
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
@@ -982,7 +983,7 @@ namespace CimCareMod.AI
             {
                 bool deleted = false;
                 uint nextCitizenUnitIndex = citizenManager.m_units.m_buffer[citizenUnitIndex].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
+                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & (CitizenUnit.Flags)CimCareFlags.NursingHome) != CitizenUnit.Flags.None)
                 {
                     if (citizenManager.m_units.m_buffer[citizenUnitIndex].Empty())
                     {
@@ -1015,7 +1016,7 @@ namespace CimCareMod.AI
             {
                 bool deleted = false;
                 uint nextCitizenUnitIndex = citizenManager.m_units.m_buffer[citizenUnitIndex].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
+                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & (CitizenUnit.Flags)CimCareFlags.NursingHome) != CitizenUnit.Flags.None)
                 {
                     DeleteRoom(citizenUnitIndex, ref citizenManager.m_units.m_buffer[citizenUnitIndex], prevUnit);
                     numRoomsToDelete--;
@@ -1056,23 +1057,14 @@ namespace CimCareMod.AI
             {
                 return;
             }
-            if ((data.m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
+            if ((data.m_flags & (CitizenUnit.Flags)CimCareFlags.NursingHome) != CitizenUnit.Flags.None)
             {
                 citizenManager.m_citizens.m_buffer[citizen].m_homeBuilding = 0;
             }
-            if ((data.m_flags & (CitizenUnit.Flags.Work | CitizenUnit.Flags.Student)) != CitizenUnit.Flags.None)
+            if ((data.m_flags & (CitizenUnit.Flags.Work)) != CitizenUnit.Flags.None)
             {
                 citizenManager.m_citizens.m_buffer[citizen].m_workBuilding = 0;
             }
-            if ((data.m_flags & CitizenUnit.Flags.Visit) != CitizenUnit.Flags.None)
-            {
-                citizenManager.m_citizens.m_buffer[citizen].m_visitBuilding = 0;
-            }
-            if ((data.m_flags & CitizenUnit.Flags.Vehicle) == CitizenUnit.Flags.None)
-            {
-                return;
-            }
-            citizenManager.m_citizens.m_buffer[citizen].m_vehicle = 0;
         }
 
     }

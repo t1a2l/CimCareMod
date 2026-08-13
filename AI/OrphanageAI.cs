@@ -164,7 +164,7 @@ namespace CimCareMod.AI
             }
             base.CreateBuilding(buildingID, ref data);
             int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
-            Singleton<CitizenManager>.instance.CreateUnits(out data.m_citizenUnits, ref Singleton<SimulationManager>.instance.m_randomizer, buildingID, 0, GetModifiedCapacity(), workCount, 0, 0, 0);
+            CitizenUnits.CreateUnits(out data.m_citizenUnits, ref Singleton<SimulationManager>.instance.m_randomizer, (CitizenUnit.Flags)CimCareFlags.Orphanage, buildingID, GetModifiedCapacity(), workCount);
         }
 
         public override void BuildingLoaded(ushort buildingID, ref Building data, uint version)
@@ -177,7 +177,7 @@ namespace CimCareMod.AI
             ValidateCapacity(buildingID, ref data, false);
 
             int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
-            EnsureCitizenUnits(buildingID, ref data, GetModifiedCapacity(), workCount, 0, 0);
+            CitizenUnits.EnsureCitizenUnits(buildingID, ref data, (CitizenUnit.Flags)CimCareFlags.Orphanage, GetModifiedCapacity(), workCount);
         }
 
         public override void EndRelocating(ushort buildingID, ref Building data)
@@ -190,7 +190,7 @@ namespace CimCareMod.AI
             ValidateCapacity(buildingID, ref data, false);
 
             int workCount = numUneducatedWorkers + numEducatedWorkers + numWellEducatedWorkers + numHighlyEducatedWorkers;
-            EnsureCitizenUnits(buildingID, ref data, GetModifiedCapacity(), workCount, 0, 0);
+            CitizenUnits.EnsureCitizenUnits(buildingID, ref data, (CitizenUnit.Flags)CimCareFlags.Orphanage, GetModifiedCapacity(), workCount);
         }
 
         protected override void ManualActivation(ushort buildingID, ref Building buildingData)
@@ -246,7 +246,7 @@ namespace CimCareMod.AI
                 num = Mathf.Min(num, 50);
             }
             int budget = Singleton<EconomyManager>.instance.GetBudget(m_info.m_class);
-            num = PlayerBuildingAI.GetProductionRate(num, budget);
+            num = GetProductionRate(num, budget);
             return num * operationRadius * 0.01f;
         }
 
@@ -273,7 +273,7 @@ namespace CimCareMod.AI
             int aliveHomeCount = 0;
             int emptyHomeCount = 0;
 
-            GetHomeBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveCount, ref totalCount, ref homeCount, ref aliveHomeCount, ref emptyHomeCount);
+            CitizenUnits.GetCimCareFlagsBehaviour(buildingID, ref buildingData, ref behaviour, (CitizenUnit.Flags)CimCareFlags.Orphanage, ref aliveCount, ref totalCount, ref homeCount, ref aliveHomeCount, ref emptyHomeCount);
             GetWorkBehaviour(buildingID, ref buildingData, ref behaviour, ref aliveWorkerCount, ref totalWorkerCount);
 
             DistrictManager districtManager = Singleton<DistrictManager>.instance;
@@ -472,7 +472,7 @@ namespace CimCareMod.AI
 
             if (shouldMoveIn)
             {
-                // get all the students in the family
+                // get all the children in the family
                 List<uint> childrenList = [];
                 foreach (uint familyMember in familyWithChildren)
                 {
@@ -493,7 +493,7 @@ namespace CimCareMod.AI
                     }
                     uint childId = childrenList[i];
                     Utils.Logger.LogInfo(Utils.Logger.LOG_PRODUCTION, "OrphanageAI.ProduceGoods -- Moving In: {0}", childId);
-                    citizenManager.m_citizens.m_buffer[childId].SetHome(childId, buildingID, orphanageRoomId);
+                    CitizenUnits.SetHome(childId, buildingID, orphanageRoomId, "In", (CitizenUnit.Flags)CimCareFlags.Orphanage);
                     orphanageManager.DoneProcessingChild(childId);
                 }
             }
@@ -510,7 +510,7 @@ namespace CimCareMod.AI
                     Utils.Logger.LogInfo(Utils.Logger.LOG_PRODUCTION, "OrphanageAI.ProduceGoods -- Moving Out: {0}", orphanId);
                     if (orphanId != 0)
                     {
-                        citizenManager.m_citizens.m_buffer[orphanId].SetHome(orphanId, 0, 0);
+                        CitizenUnits.SetHome(orphanId, 0, 0, "Out", (CitizenUnit.Flags)CimCareFlags.Orphanage);
                         orphanageManager.DoneProcessingChild(orphanId);
                     }
                 }
@@ -631,7 +631,7 @@ namespace CimCareMod.AI
             while (citizenUnitIndex != 0)
             {
                 uint nextCitizenUnitIndex = citizenManager.m_units.m_buffer[citizenUnitIndex].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
+                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & (CitizenUnit.Flags)CimCareFlags.Orphanage) != CitizenUnit.Flags.None)
                 {
                     for (int i = 0; i < 5; i++)
                     {
@@ -674,7 +674,7 @@ namespace CimCareMod.AI
             while (citizenUnit != 0)
             {
                 uint num5 = citizenManager.m_units.m_buffer[citizenUnit].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnit].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
+                if ((citizenManager.m_units.m_buffer[citizenUnit].m_flags & (CitizenUnit.Flags)CimCareFlags.Orphanage) != CitizenUnit.Flags.None)
                 {
                     int residentRequirement1 = 0;
                     int residentRequirement2 = 0;
@@ -814,6 +814,7 @@ namespace CimCareMod.AI
                     return 0f;
             }
         }
+        
         public override float GetEventImpact(ushort buildingID, ref Building data, NaturalResourceManager.Resource resource, float amount)
         {
             if ((data.m_flags & (Building.Flags.Abandoned | Building.Flags.BurnedDown)) != Building.Flags.None)
@@ -907,7 +908,7 @@ namespace CimCareMod.AI
             while ((int)citizenUnitIndex != 0)
             {
                 uint nextCitizenUnitIndex = citizenManager.m_units.m_buffer[citizenUnitIndex].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
+                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & (CitizenUnit.Flags)CimCareFlags.Orphanage) != CitizenUnit.Flags.None)
                 {
                     bool occupied = false;
                     for (int index = 0; index < 5; ++index)
@@ -963,7 +964,7 @@ namespace CimCareMod.AI
             while ((int)citizenUnitIndex != 0)
             {
                 uint nextCitizenUnitIndex = citizenManager.m_units.m_buffer[citizenUnitIndex].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
+                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & (CitizenUnit.Flags)CimCareFlags.Orphanage) != CitizenUnit.Flags.None)
                 {
                     numRoomsFound++;
                 }
@@ -987,7 +988,7 @@ namespace CimCareMod.AI
             }
             else
             {
-                DeleteRooms((numRoomsFound - numRoomsExpected), buildingId, ref data);
+                DeleteRooms(numRoomsFound - numRoomsExpected, ref data);
             }
         }
 
@@ -995,11 +996,11 @@ namespace CimCareMod.AI
         {
             Utils.Logger.LogInfo(Utils.Logger.LOG_CAPACITY_MANAGEMENT, "OrphanageAI.CreateRooms -- Creating {0} Rooms", numRoomsToCreate);
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
-            citizenManager.CreateUnits(out uint firstUnit, ref Singleton<SimulationManager>.instance.m_randomizer, buildingId, 0, numRoomsToCreate, 0, 0, 0, 0);
+            CitizenUnits.CreateUnits(out uint firstUnit, ref Singleton<SimulationManager>.instance.m_randomizer, (CitizenUnit.Flags)CimCareFlags.Orphanage, buildingId, numRoomsToCreate, 0);
             citizenManager.m_units.m_buffer[lastCitizenUnitIndex].m_nextUnit = firstUnit;
         }
 
-        private void DeleteRooms(int numRoomsToDelete, ushort buildingId, ref Building data)
+        private void DeleteRooms(int numRoomsToDelete, ref Building data)
         {
             Utils.Logger.LogInfo(Utils.Logger.LOG_CAPACITY_MANAGEMENT, "OrphanageAI.DeleteRooms -- Deleting {0} Rooms", numRoomsToDelete);
             CitizenManager citizenManager = Singleton<CitizenManager>.instance;
@@ -1013,7 +1014,7 @@ namespace CimCareMod.AI
             {
                 bool deleted = false;
                 uint nextCitizenUnitIndex = citizenManager.m_units.m_buffer[citizenUnitIndex].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
+                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & (CitizenUnit.Flags)CimCareFlags.Orphanage) != CitizenUnit.Flags.None)
                 {
                     if (citizenManager.m_units.m_buffer[citizenUnitIndex].Empty())
                     {
@@ -1046,7 +1047,7 @@ namespace CimCareMod.AI
             {
                 bool deleted = false;
                 uint nextCitizenUnitIndex = citizenManager.m_units.m_buffer[citizenUnitIndex].m_nextUnit;
-                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
+                if ((citizenManager.m_units.m_buffer[citizenUnitIndex].m_flags & (CitizenUnit.Flags)CimCareFlags.Orphanage) != CitizenUnit.Flags.None)
                 {
                     DeleteRoom(citizenUnitIndex, ref citizenManager.m_units.m_buffer[citizenUnitIndex], prevUnit);
                     numRoomsToDelete--;
@@ -1087,21 +1088,13 @@ namespace CimCareMod.AI
             {
                 return;
             }
-            if ((data.m_flags & CitizenUnit.Flags.Home) != CitizenUnit.Flags.None)
+            if ((data.m_flags & (CitizenUnit.Flags)CimCareFlags.Orphanage) != CitizenUnit.Flags.None)
             {
                 citizenManager.m_citizens.m_buffer[citizen].m_homeBuilding = 0;
             }
             if ((data.m_flags & (CitizenUnit.Flags.Work | CitizenUnit.Flags.Student)) != CitizenUnit.Flags.None)
             {
                 citizenManager.m_citizens.m_buffer[citizen].m_workBuilding = 0;
-            }
-            if ((data.m_flags & CitizenUnit.Flags.Visit) != CitizenUnit.Flags.None)
-            {
-                citizenManager.m_citizens.m_buffer[citizen].m_visitBuilding = 0;
-            }
-            if ((data.m_flags & CitizenUnit.Flags.Vehicle) == CitizenUnit.Flags.None)
-            {
-                return;
             }
             citizenManager.m_citizens.m_buffer[citizen].m_vehicle = 0;
         }
